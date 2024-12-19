@@ -276,7 +276,7 @@ generate_and_copy_certs() {
 }
 
 # Fonction pour démarrer et vérifier Wazuh Indexer
-start_and_verify_wazuh_inexer() {
+start_and_verify_wazuh_indexer() {
     echo "Démarrage du service Wazuh Indexer..."
     systemctl daemon-reload
     systemctl enable wazuh-indexer
