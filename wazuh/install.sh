@@ -18,19 +18,27 @@ detect_os() {
     fi
 }
 
-# Fonction pour vérifier et importer la clé GPG
+# Fonction pour importer la clé GPG
 import_gpg_key() {
     local key_url=$1
-    local keyring=$2
 
-    if [ ! -f "$keyring" ]; then
-        echo "Importation de la clé GPG..."
-        curl -s "$key_url" | gpg --no-default-keyring --keyring gnupg-ring:"$keyring" --import && chmod 644 "$keyring" || {
-            echo "Erreur lors de l'importation de la clé GPG." >&2
+    if [ "$OS_INFO" == "centos" ] || [ "$OS_INFO" == "rhel" ] || [ "$OS_INFO" == "fedora" ]; then
+        echo "Importation de la clé GPG avec rpm..."
+        rpm --import "$key_url" || {
+            echo "Erreur lors de l'importation de la clé GPG avec rpm." >&2
             exit 1
         }
     else
-        echo "Clé GPG déjà importée."
+        echo "Importation de la clé GPG avec gpg..."
+        local keyring="/usr/share/keyrings/wazuh.gpg"
+        if [ ! -f "$keyring" ]; then
+            curl -s "$key_url" | gpg --dearmor -o "$keyring" && chmod 644 "$keyring" || {
+                echo "Erreur lors de l'importation de la clé GPG." >&2
+                exit 1
+            }
+        else
+            echo "Clé GPG déjà importée."
+        fi
     fi
 }
 
@@ -76,7 +84,7 @@ install_debian() {
     echo "Installation des dépendances..."
     install_packages "apt" curl git unzip dos2unix wget vim nano debconf adduser procps gnupg apt-transport-https
 
-    import_gpg_key "https://packages.wazuh.com/key/GPG-KEY-WAZUH" "/usr/share/keyrings/wazuh.gpg"
+    import_gpg_key "https://packages.wazuh.com/key/GPG-KEY-WAZUH"
 
     add_repo "/etc/apt/sources.list.d/wazuh.list" "deb [signed-by=/usr/share/keyrings/wazuh.gpg] https://packages.wazuh.com/4.x/apt/ stable main"
 
@@ -104,7 +112,7 @@ install_centos() {
     echo "Installation des dépendances..."
     install_packages "yum" curl git unzip dos2unix wget vim nano coreutils
 
-    import_gpg_key "https://packages.wazuh.com/key/GPG-KEY-WAZUH" "" # GPG non nécessaire dans un fichier pour CentOS
+    import_gpg_key "https://packages.wazuh.com/key/GPG-KEY-WAZUH"
 
     add_repo "/etc/yum.repos.d/wazuh.repo" "[wazuh]
 gpgcheck=1
