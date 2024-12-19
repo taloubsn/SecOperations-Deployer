@@ -189,38 +189,46 @@ configure_admin_password() {
         exit 1
     fi
 
-    # Créer le keystore de Filebeat s'il n'existe pas déjà
-    if [ ! -f /etc/filebeat/filebeat.keystore ]; then
-        echo "Création du keystore Filebeat..."
-        filebeat keystore create
-        if [ $? -ne 0 ]; then
-            echo "Erreur lors de la création du keystore Filebeat." >&2
-            exit 1
-        fi
+    # Supprimer l'ancien keystore de Filebeat si nécessaire
+    if [ -f /etc/filebeat/filebeat.keystore ]; then
+        echo "Un keystore Filebeat existe déjà. Suppression..."
+        rm -f /etc/filebeat/filebeat.keystore
     fi
 
-    # Ajouter le nom d'utilisateur 'admin' dans le keystore de Filebeat
+    # Créer un nouveau keystore pour Filebeat
+    echo "Création du keystore Filebeat..."
+    filebeat keystore create --force
+    if [ $? -ne 0 ]; then
+        echo "Erreur lors de la création du keystore Filebeat." >&2
+        exit 1
+    fi
+
+    # Ajouter le nom d'utilisateur 'admin' et le mot de passe dans le keystore de Filebeat
     echo "admin" | filebeat keystore add username --stdin --force
     if [ $? -ne 0 ]; then
         echo "Erreur lors de l'ajout du nom d'utilisateur dans le keystore Filebeat." >&2
         exit 1
     fi
 
-    # Ajouter le mot de passe de l'utilisateur admin dans le keystore de Filebeat
     echo "$ADMIN_PASSWORD" | filebeat keystore add password --stdin --force
     if [ $? -ne 0 ]; then
         echo "Erreur lors de l'ajout du mot de passe dans le keystore Filebeat." >&2
         exit 1
     fi
 
-    # Ajouter le nom d'utilisateur 'admin' dans le keystore de Wazuh
+    # Supprimer l'ancien keystore de Wazuh si nécessaire
+    if [ -f /var/ossec/data/wazuh/config/wazuh.keystore ]; then
+        echo "Un keystore Wazuh existe déjà. Suppression..."
+        rm -f /var/ossec/data/wazuh/config/wazuh.keystore
+    fi
+
+    # Ajouter le nom d'utilisateur 'admin' et le mot de passe dans le keystore de Wazuh
     echo "admin" | /var/ossec/bin/wazuh-keystore -f indexer -k username
     if [ $? -ne 0 ]; then
         echo "Erreur lors de l'ajout du nom d'utilisateur dans le keystore Wazuh." >&2
         exit 1
     fi
 
-    # Ajouter le mot de passe de l'utilisateur admin dans le keystore de Wazuh
     echo "$ADMIN_PASSWORD" | /var/ossec/bin/wazuh-keystore -f indexer -k password
     if [ $? -ne 0 ]; then
         echo "Erreur lors de l'ajout du mot de passe dans le keystore Wazuh." >&2
