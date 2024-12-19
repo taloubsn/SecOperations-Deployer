@@ -50,7 +50,6 @@ add_repo() {
     fi
 }
 
-
 # Fonction pour installer les paquets
 install_packages() {
     local package_manager=$1
@@ -117,6 +116,7 @@ protect=1"
 
     install_packages "yum" wazuh-indexer wazuh-manager filebeat wazuh-dashboard libcap
     echo "Installation terminée sur CentOS/RHEL."
+}
 
 # Fonction de gestion des erreurs
 error_exit() {
