@@ -33,41 +33,30 @@ download_files() {
         echo "Erreur : Les fichiers nécessaires n'ont pas pu être téléchargés." >&2
         exit 1
     fi
+    chmod +x wazuh-certs-tool.sh
 }
 
-# Fonction pour configurer le Wazuh Indexer
-
-# Fonction pour configurer le Wazuh Indexer
+# Fonction pour configurer Wazuh Indexer
 configure_wazuh_indexer() {
     local file="config.yml"
     echo "Configuration de Wazuh Indexer..."
 
     # Configurer les nœuds indexer
-    sed -i "s|ip: <indexer-node-ip>|ip: $IP|" "$file"
     sed -i "s|name: node-1|name: $WAZUH_INDEXER_NAME|" "$file"
-
+    sed -i "/^ *ip: \"<indexer-node-ip>\"/s|ip: \"<indexer-node-ip>\"|ip: \"$IP\"|" "$file"
     # Configurer les nœuds server
     sed -i "s|name: wazuh-1|name: $WAZUH_MANAGER_NAME|" "$file"
-    sed -i "s|ip: <wazuh-manager-ip>|ip: $IP|" "$file"
+    sed -i "/^ *ip: \"<wazuh-manager-ip>\"/s|ip: \"<wazuh-manager-ip>\"|ip: \"$IP\"|" "$file"
 
     # Configurer les nœuds dashboard
     sed -i "s|name: dashboard|name: $WAZUH_DASHBOARD_NAME|" "$file"
-    sed -i "s|ip: <dashboard-node-ip>|ip: $IP|" "$file"
+    sed -i "/^ *ip: \"<dashboard-node-ip>\"/s|ip: \"<dashboard-node-ip>\"|ip: \"$IP\"|" "$file"
 
     # Vérifier si toutes les remplacements ont été effectués
-    if grep -q "<indexer-node-ip>" "$file" || grep -q "<wazuh-manager-ip>" "$file" || grep -q "<dashboard-node-ip>" "$file"; then
-        echo "Erreur : La configuration n'a pas été correctement appliquée dans $file." >&2
-        exit 1
-    fi
 
-    echo "Configuration de config.yml terminé avec succès"
+    echo "Configuration de config.yml terminée avec succès."
 
-    echo ".....................................................................\n"
-
-    echo "Configuration de Wazuh Indexer..."
-
-
-    # Mise à jour de /etc/wazuh-indexer/opensearch.yml
+    echo "Mise à jour de /etc/wazuh-indexer/opensearch.yml..."
     local opensearch_file="/etc/wazuh-indexer/opensearch.yml"
 
     if [ ! -f "$opensearch_file" ]; then
@@ -76,161 +65,112 @@ configure_wazuh_indexer() {
     fi
 
     # Faire une copie de sauvegarde
-    cp "$opensearch_file" "${opensearch_file}.bak"
-    echo "Une copie de sauvegarde du fichier $opensearch_file a été créée."
+    cp "$opensearch_file" "${opensearch_file}.copy"
 
     # Modifier le fichier
-    sed -i "s|^network\.host:.*|network.host: $IP|" "$opensearch_file"
-    sed -i "s|^node\.name:.*|node.name: $WAZUH_INDEXER_NAME|" "$opensearch_file"
-    sed -i "s|^cluster\.initial_master_nodes:.*|cluster.initial_master_nodes:\n- \"$WAZUH_INDEXER_NAME\"|" "$opensearch_file"
+    sed -i "s|^network\.host:.*|network.host: \"$IP\"|" "$opensearch_file"
+    sed -i "s|^node\.name:.*|node.name: \"$WAZUH_INDEXER_NAME\"|" "$opensearch_file"
+    sed -i "/^cluster\.initial_master_nodes:/,/^#/{s|\"node-1\"|\"$WAZUH_INDEXER_NAME\"|}" "$opensearch_file"
 
     echo "Mise à jour de $opensearch_file terminée avec succès."
-
 }
-
 
 # Fonction pour générer et copier les certificats
 generate_and_copy_certs() {
-    echo "Génération des certificats avec wazuh-certs-tool..."
-    bash wazuh-certs-tool.sh -A
+    echo "Début de la génération des certificats avec wazuh-certs-tool..."
 
-    echo "Copie des certificats générés pour $WAZUH_INDEXER_NAME..."
+    # Vérifier si l'outil existe
+    CERTS_TOOL="./wazuh-certs-tool.sh"
+    if [[ ! -f "$CERTS_TOOL" ]]; then
+        echo "Erreur : L'outil wazuh-certs-tool.sh est introuvable." >&2
+        exit 1
+    fi
 
-    cd wazuh-certificates
-    # Créer le répertoire des certificats
-    mkdir -p /etc/wazuh-indexer/certs
+    # Exécuter l'outil pour générer les certificats
+    echo "Exécution de la commande : $CERTS_TOOL -A"
+    if ! bash "$CERTS_TOOL" -A; then
+        echo "Erreur : Échec de la génération des certificats." >&2
+        exit 1
+    fi
+    echo "Certificats générés avec succès."
 
-    # Copier les certificats dans le répertoire
+    # Vérification de la présence du répertoire de certificats générés
+    OUTPUT_CERTIFICATES_DIR="wazuh-certificates"
+    if [[ ! -d "$OUTPUT_CERTIFICATES_DIR" ]]; then
+        echo "Erreur : Le répertoire $OUTPUT_CERTIFICATES_DIR est introuvable après la génération." >&2
+        exit 1
+    fi
+    cd "$OUTPUT_CERTIFICATES_DIR" || exit 1
+
+    # Créer les répertoires de destination si nécessaire
+    echo "Création des répertoires de certificats..."
+    mkdir -p /etc/wazuh-indexer/certs /etc/filebeat/certs /etc/wazuh-dashboard/certs
+
+    # Copier les certificats vers leurs destinations respectives
+    echo "Copie des certificats vers les répertoires de destination..."
     cp admin.pem admin-key.pem root-ca.pem /etc/wazuh-indexer/certs
-    cp $WAZUH_INDEXER_NAME.pem /etc/wazuh-indexer/certs/indexer.pem
-    cp  $WAZUH_INDEXER_NAME.pem /etc/wazuh-indexer/certs/indexer-key.pem
+    cp "$WAZUH_INDEXER_NAME.pem" /etc/wazuh-indexer/certs/indexer.pem
+    cp "$WAZUH_INDEXER_NAME-key.pem" /etc/wazuh-indexer/certs/indexer-key.pem
 
-    # Appliquer les permissions
-    chmod 500 /etc/wazuh-indexer/certs
-    chmod 400 /etc/wazuh-indexer/certs/*
-
-    # Modifier le propriétaire
-    chown -R wazuh-indexer:wazuh-indexer /etc/wazuh-indexer/certs
-
-    mkdir /etc/filebeat/certs
     cp root-ca.pem /etc/filebeat/certs
-    cp $WAZUH_MANAGER_NAME.pem /etc/filebeat/certs/filebeat.pem
-    cp $WAZUH_MANAGER_NAME.pem /etc/filebeat/certs/filebeat-key.pem
-    chmod 500 /etc/filebeat/certs
-    chmod 400 /etc/filebeat/certs/*
+    cp "$WAZUH_MANAGER_NAME.pem" /etc/filebeat/certs/filebeat.pem
+    cp "$WAZUH_MANAGER_NAME-key.pem" /etc/filebeat/certs/filebeat-key.pem
+
+    cp root-ca.pem /etc/wazuh-dashboard/certs
+    cp "$WAZUH_DASHBOARD_NAME.pem" /etc/wazuh-dashboard/certs/dashboard.pem
+    cp "$WAZUH_DASHBOARD_NAME-key.pem" /etc/wazuh-dashboard/certs/dashboard-key.pem
+
+    # Appliquer les permissions et changer les propriétaires
+    echo "Application des permissions et configuration des propriétaires..."
+    chmod -R 500 /etc/wazuh-indexer/certs /etc/filebeat/certs /etc/wazuh-dashboard/certs
+    chmod -R 400 /etc/wazuh-indexer/certs/* /etc/filebeat/certs/* /etc/wazuh-dashboard/certs/*
+    chown -R wazuh-indexer:wazuh-indexer /etc/wazuh-indexer/certs
     chown -R root:root /etc/filebeat/certs
-
-
-    cp root-ca.pem  /etc/wazuh-dashboard/certs
-    cp $WAZUH_DASHBOARD_NAME.pem /etc/wazuh-dashboard/certs/dashboard.pem
-    cp $WAZUH_DASHBOARD_NAME.pem /etc/wazuh-dashboard/certs/dashboard-key.pem
-    chmod 500 /etc/wazuh-dashboard/certs
-    chmod 400 /etc/wazuh-dashboard/certs/*
     chown -R wazuh-dashboard:wazuh-dashboard /etc/wazuh-dashboard/certs
 
-
-    echo "Certificats générés et copiés avec succès."
+    echo "Certificats générés, copiés et configurés avec succès."
 }
 
-# Fonction pour configurer le Wazuh Manager
-configure_wazuh_manager() {
-    echo "Configuration du Wazuh Manager..."
-    # Ajouter ici les commandes spécifiques pour configurer le Wazuh Manager
-}
-
-# Fonction pour configurer Filebeat
-configure_filebeat() {
-    echo "Configuration de Filebeat..."
-    # Ajouter ici les commandes spécifiques pour configurer Filebeat
-}
-
-# Fonction pour configurer le Wazuh Dashboard
-configure_wazuh_dashboard() {
-    echo "Configuration du Wazuh Dashboard..."
-    # Ajouter ici les commandes spécifiques pour configurer le Dashboard
-}
-
-# Fonction pour démarrer les services requis
-enable_and_start_wazuh_indexer() {
-    echo "Activation et démarrage des services..."
-
+# Fonction pour démarrer et vérifier Wazuh Indexer
+start_and_verify_wazuh_indexer() {
+    echo "Démarrage du service Wazuh Indexer..."
+    systemctl daemon-reload
     systemctl enable wazuh-indexer
     systemctl start wazuh-indexer
+
     if systemctl is-active --quiet wazuh-indexer; then
         echo "Wazuh Indexer est actif."
     else
-        echo "Erreur : Wazuh Indexer n'a pas pu être activé." >&2
+        echo "Erreur : Wazuh Indexer n'a pas pu être démarré." >&2
+        journalctl -u wazuh-indexer --no-pager | tail -n 20
         exit 1
     fi
-
-    echo "Chargement des nouvelles informations de certificats et démarrage du cluster à nœud unique."
-    /usr/share/wazuh-indexer/bin/indexer-security-init.sh
-
-    echo ".....................................................................\n"
-    echo "Le chargement et le démarrage a été terminée avec succès."
-
 }
 
-
-enable_and_start_wazuh_manager() {
-    echo "Activation et démarrage des services..."
-
-    systemctl enable wazuh-manager
-    systemctl start wazuh-manager
-    if systemctl is-active --quiet wazuh-manager; then
-        echo "Wazuh Manager est actif."
+# Fonction pour initialiser le cluster Wazuh Indexer
+initialize_wazuh_indexer_cluster() {
+    echo "Initialisation de la sécurité et du cluster Wazuh Indexer..."
+    # Exécution du script d'initialisation de la sécurité
+    if /usr/share/wazuh-indexer/bin/indexer-security-init.sh; then
+        echo "Initialisation du cluster Wazuh Indexer réussie."
     else
-        echo "Erreur : Wazuh manager n'a pas pu être activé." >&2
+        echo "Erreur lors de l'initialisation du cluster Wazuh Indexer." >&2
         exit 1
     fi
 }
 
-
-enable_and_start_filebeat() {
-    echo "Activation et démarrage des services..."
-
-    systemctl enable filebeat
-    systemctl start filebeat
-    if systemctl is-active --quiet filebeat; then
-        echo "Filebeat est actif."
-    else
-        echo "Erreur : Filebeat n'a pas pu être activé." >&2
-        exit 1
-    fi
-}
-
-
-enable_and_start_wazuh_dashboard() {
-    echo "Activation et démarrage des services..."
-
-    systemctl enable wazuh-dashboard
-    systemctl start wazuh-dashboard
-    if systemctl is-active --quiet wazuh-dashboard; then
-        echo "Wazuh Dashboard est actif."
-    else
-        echo "Erreur : Wazuh Dashboard n'a pas pu être activé." >&2
-        exit 1
-    fi
-}
 
 # Fonction principale qui orchestre tout
 configure_wazuh() {
-    check_env_file  # Vérifier l'existence et la lisibilité du fichier .env
-    load_env_variables  # Charger les variables d'environnement
-    download_files  # Télécharger les fichiers nécessaires
-
-    configure_wazuh_indexer  # Configurer le Wazuh Indexer, Server et Dashboard
-    generate_and_copy_certs  # Générer et copier les certificats
-    configure_wazuh_manager  # Configurer le Wazuh Manager
-    configure_filebeat  # Configurer Filebeat
-    configure_wazuh_dashboard  # Configurer le Wazuh Dashboard
-
-    enable_and_start_services  # Activer et démarrer les services requis
-
-    echo "La configuration de Wazuh Single Node a été complétée avec succès."
+    check_env_file
+    load_env_variables
+    download_files
+    configure_wazuh_indexer
+    generate_and_copy_certs
+    start_and_verify_wazuh_indexer
+    initialize_wazuh_indexer_cluster
+    echo "Configuration de Wazuh Single Node complétée avec succès."
 }
 
 # Exécution de la fonction principale
 configure_wazuh
-
-
