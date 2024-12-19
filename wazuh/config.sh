@@ -75,6 +75,150 @@ configure_wazuh_indexer() {
     echo "Mise à jour de $opensearch_file terminée avec succès."
 }
 
+# Fonction principale pour configurer Wazuh Manager et Filebeat
+configure_wazuh_manager_filebeat() {
+    echo "Configuration de Wazuh Manager et Filebeat..."
+
+    # Téléchargements et configuration
+    declare -A files=(
+        ["https://packages.wazuh.com/4.9/tpl/wazuh/filebeat/filebeat.yml"]="/etc/filebeat/filebeat.yml"
+        ["https://raw.githubusercontent.com/wazuh/wazuh/v4.9.2/extensions/elasticsearch/7.x/wazuh-template.json"]="/etc/filebeat/wazuh-template.json"
+    )
+
+    for url in "${!files[@]}"; do
+        destination="${files[$url]}"
+        if curl -so "$destination" "$url"; then
+            echo "Fichier téléchargé avec succès : $destination"
+            [[ "$destination" == *wazuh-template.json ]] && chmod go+r "$destination" && echo "Permissions configurées : go+r"
+        else
+            echo "Erreur lors du téléchargement depuis $url." >&2
+            exit 1
+        fi
+    done
+
+    # Extraction du module wazuh-filebeat
+    if curl -s https://packages.wazuh.com/4.x/filebeat/wazuh-filebeat-0.4.tar.gz | tar -xvz -C /usr/share/filebeat/module; then
+        echo "Module wazuh-filebeat extrait avec succès."
+    else
+        echo "Erreur lors de l'extraction du module wazuh-filebeat." >&2
+        exit 1
+    fi
+
+    # Mise à jour des fichiers de configuration
+    if sed -i "s|hosts: \[.*\]|hosts: [\"$IP:9200\"]|" /etc/filebeat/filebeat.yml; then
+        echo "Fichier filebeat.yml à été mis jour"
+    else
+        echo "Erreur lors de la modification du fichier filebeat.yml." >&2
+        exit 1
+    fi
+
+    if sed -i "s|<host>https://.*:9200</host>|<host>https://$IP:9200</host>|" /var/ossec/etc/ossec.conf; then
+        echo "Fichier ossec.conf a été mis jour"
+    else
+        echo "Erreur lors de la modification du fichier ossec.conf." >&2
+        exit 1
+    fi
+}
+
+# Fonction pour configurer Wazuh Dashboard
+configure_wazuh_dashboard() {
+    echo "Configuration du Wazuh Dashboard..."
+
+    # Vérifier si le fichier de configuration OpenSearch existe
+    OPENSEARCH_CONFIG="/etc/wazuh-dashboard/opensearch_dashboards.yml"
+    if [ ! -f "$OPENSEARCH_CONFIG" ]; then
+        echo "Le fichier de configuration OpenSearch Dashboards $OPENSEARCH_CONFIG est introuvable." >&2
+        exit 1
+    fi
+    # Modifier le fichier de configuration d'OpenSearch Dashboards
+    if sed -i "s|opensearch.hosts:.*|opensearch.hosts: [\"https://$IP:9200\"]|" "$OPENSEARCH_CONFIG"; then
+        echo "Fichier opensearch_dashboards.yml mis à jour avec l'IP : $IP et le port 9200."
+    else
+        echo "Erreur lors de la modification du fichier opensearch_dashboards.yml." >&2
+        exit 1
+    fi
+
+    systemctl daemon-reload
+    systemctl enable wazuh-dashboard
+    systemctl start wazuh-dashboard
+
+    # Vérifier si le fichier de configuration Wazuh Dashboard existe
+    WAZUH_DASHBOARD_CONFIG="/usr/share/wazuh-dashboard/data/wazuh/config/wazuh.yml"
+    if [ ! -f "$WAZUH_DASHBOARD_CONFIG" ]; then
+        echo "Le fichier de configuration Wazuh Dashboard $WAZUH_DASHBOARD_CONFIG est introuvable." >&2
+        exit 1
+    fi
+    # Modifier le fichier de configuration de Wazuh Dashboard
+    if sed -i -E "s|url: https://.*|url: https://$IP|" "$WAZUH_DASHBOARD_CONFIG"; then
+        echo "Fichier wazuh.yml mis à jour avec les paramètres Wazuh Dashboard."
+    else
+        echo "Erreur lors de la modification du fichier wazuh.yml." >&2
+        exit 1
+    fi
+}
+
+# Fonction pour configurer le mot de passe de l'utilisateur admin dans les keystores Filebeat et Wazuh
+configure_admin_password() {
+    LOG_FILE="/var/ossec/etc/wazuh_passwords.log"
+    echo "Configuration du mot de passe de l'utilisateur admin dans les keystores Filebeat et Wazuh..."
+
+    # Exécuter la commande pour récupérer les mots de passe
+    PASSWORDS_OUTPUT=$(/usr/share/wazuh-indexer/plugins/opensearch-security/tools/wazuh-passwords-tool.sh --api --change-all --admin-user wazuh --admin-password wazuh 2>&1 | tee -a "$LOG_FILE")
+    if [[ $? -ne 0 ]]; then
+        echo "Erreur lors de l'exécution de la commande wazuh-passwords-tool.sh." >&2
+        echo "$PASSWORDS_OUTPUT" >&2
+        exit 1
+    fi
+
+    # Extraire le mot de passe de l'utilisateur admin
+    ADMIN_PASSWORD=$(echo "$PASSWORDS_OUTPUT" | grep -oP 'The password for user admin is \K[^\s]+')
+    if [ -z "$ADMIN_PASSWORD" ]; then
+        echo "Erreur : Mot de passe pour l'utilisateur admin introuvable." >&2
+        exit 1
+    fi
+
+    # Créer le keystore de Filebeat s'il n'existe pas déjà
+    if [ ! -f /etc/filebeat/filebeat.keystore ]; then
+        echo "Création du keystore Filebeat..."
+        filebeat keystore create
+        if [ $? -ne 0 ]; then
+            echo "Erreur lors de la création du keystore Filebeat." >&2
+            exit 1
+        fi
+    fi
+
+    # Ajouter le nom d'utilisateur 'admin' dans le keystore de Filebeat
+    echo "admin" | filebeat keystore add username --stdin --force
+    if [ $? -ne 0 ]; then
+        echo "Erreur lors de l'ajout du nom d'utilisateur dans le keystore Filebeat." >&2
+        exit 1
+    fi
+
+    # Ajouter le mot de passe de l'utilisateur admin dans le keystore de Filebeat
+    echo "$ADMIN_PASSWORD" | filebeat keystore add password --stdin --force
+    if [ $? -ne 0 ]; then
+        echo "Erreur lors de l'ajout du mot de passe dans le keystore Filebeat." >&2
+        exit 1
+    fi
+
+    # Ajouter le nom d'utilisateur 'admin' dans le keystore de Wazuh
+    echo "admin" | /var/ossec/bin/wazuh-keystore -f indexer -k username
+    if [ $? -ne 0 ]; then
+        echo "Erreur lors de l'ajout du nom d'utilisateur dans le keystore Wazuh." >&2
+        exit 1
+    fi
+
+    # Ajouter le mot de passe de l'utilisateur admin dans le keystore de Wazuh
+    echo "$ADMIN_PASSWORD" | /var/ossec/bin/wazuh-keystore -f indexer -k password
+    if [ $? -ne 0 ]; then
+        echo "Erreur lors de l'ajout du mot de passe dans le keystore Wazuh." >&2
+        exit 1
+    fi
+
+    echo "Mot de passe de l'utilisateur admin ajouté avec succès dans les keystores Filebeat et Wazuh."
+}
+
+
 # Fonction pour générer et copier les certificats
 generate_and_copy_certs() {
     echo "Début de la génération des certificats avec wazuh-certs-tool..."
@@ -132,7 +276,7 @@ generate_and_copy_certs() {
 }
 
 # Fonction pour démarrer et vérifier Wazuh Indexer
-start_and_verify_wazuh_indexer() {
+start_and_verify_wazuh_inexer() {
     echo "Démarrage du service Wazuh Indexer..."
     systemctl daemon-reload
     systemctl enable wazuh-indexer
@@ -146,6 +290,49 @@ start_and_verify_wazuh_indexer() {
         exit 1
     fi
 }
+start_and_verify_wazuh_filebeat() {
+    echo "Démarrage du service Wazuh Manager..."
+    systemctl daemon-reload
+    systemctl enable wazuh-manager
+    systemctl start wazuh-manager
+
+    if systemctl is-active --quiet wazuh-manager; then
+        echo "Wazuh Manager est actif."
+    else
+        echo "Erreur : Wazuh Manager n'a pas pu être démarré." >&2
+        journalctl -u wazuh-manager --no-pager | tail -n 20
+        exit 1
+    fi
+
+    echo "Démarrage du service Wazuh Dashboard..."
+    systemctl daemon-reload
+    systemctl enable wazuh-dashboard
+    systemctl restart wazuh-dashboard
+
+    if systemctl is-active --quiet wazuh-dashboard; then
+        echo "Wazuh Dashboard est actif."
+    else
+        echo "Erreur : Wazuh Dasboard n'a pas pu être démarré." >&2
+        journalctl -u wazuh-dashboard --no-pager | tail -n 20
+        exit 1
+    fi
+
+
+    echo "Démarrage du service Filebeat..."
+    systemctl daemon-reload
+    systemctl enable filebeat
+    systemctl start filebeat
+
+    if systemctl is-active --quiet filebeat; then
+        echo "filebeat est actif."
+    else
+        echo "Erreur : filebeat n'a pas pu être démarré." >&2
+        journalctl -u filebeat --no-pager | tail -n 20
+        exit 1
+    fi
+}
+
+
 
 # Fonction pour initialiser le cluster Wazuh Indexer
 initialize_wazuh_indexer_cluster() {
@@ -169,8 +356,14 @@ configure_wazuh() {
     generate_and_copy_certs
     start_and_verify_wazuh_indexer
     initialize_wazuh_indexer_cluster
+    configure_wazuh_manager_filebeat
+    configure_wazuh_dashboard
+    configure_admin_password
+    start_and_verify_wazuh_filebeat
+
     echo "Configuration de Wazuh Single Node complétée avec succès."
 }
 
 # Exécution de la fonction principale
 configure_wazuh
+
