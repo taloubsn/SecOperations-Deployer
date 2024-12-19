@@ -142,12 +142,24 @@ configure_wazuh_dashboard() {
     systemctl enable wazuh-dashboard
     systemctl start wazuh-dashboard
 
-    # Vérifier si le fichier de configuration Wazuh Dashboard existe
+    # Attendre que le fichier de configuration Wazuh Dashboard soit généré
     WAZUH_DASHBOARD_CONFIG="/usr/share/wazuh-dashboard/data/wazuh/config/wazuh.yml"
+    echo "Attente de la création du fichier de configuration Wazuh Dashboard : $WAZUH_DASHBOARD_CONFIG..."
+    for i in {1..30}; do
+        if [ -f "$WAZUH_DASHBOARD_CONFIG" ]; then
+            echo "Le fichier de configuration Wazuh Dashboard est disponible."
+            break
+        fi
+        echo "Le fichier n'est pas encore disponible, nouvelle vérification dans 2 secondes..."
+        sleep 2
+    done
+
+    # Si le fichier n'existe toujours pas, arrêter le script avec une erreur
     if [ ! -f "$WAZUH_DASHBOARD_CONFIG" ]; then
-        echo "Le fichier de configuration Wazuh Dashboard $WAZUH_DASHBOARD_CONFIG est introuvable." >&2
+        echo "Erreur : Le fichier de configuration Wazuh Dashboard $WAZUH_DASHBOARD_CONFIG est toujours introuvable après 30 vérifications." >&2
         exit 1
     fi
+
     # Modifier le fichier de configuration de Wazuh Dashboard
     if sed -i -E "s|url: https://.*|url: https://$IP|" "$WAZUH_DASHBOARD_CONFIG"; then
         echo "Fichier wazuh.yml mis à jour avec les paramètres Wazuh Dashboard."
