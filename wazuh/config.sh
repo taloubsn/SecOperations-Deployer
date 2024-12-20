@@ -141,7 +141,7 @@ configure_wazuh_dashboard() {
     systemctl daemon-reload
     systemctl enable wazuh-dashboard
     systemctl start wazuh-dashboard
-
+    systemctl restart wazuh-dashboard
     # Attendre que le fichier de configuration Wazuh Dashboard soit généré
     WAZUH_DASHBOARD_CONFIG="/usr/share/wazuh-dashboard/data/wazuh/config/wazuh.yml"
     echo "Attente de la création du fichier de configuration Wazuh Dashboard : $WAZUH_DASHBOARD_CONFIG..."
@@ -325,9 +325,6 @@ start_and_verify_wazuh_filebeat() {
     fi
 
     echo "Démarrage du service Wazuh Dashboard..."
-    systemctl daemon-reload
-    systemctl enable wazuh-dashboard
-    systemctl restart wazuh-dashboard
 
     if systemctl is-active --quiet wazuh-dashboard; then
         echo "Wazuh Dashboard est actif."
