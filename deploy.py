@@ -1,5 +1,6 @@
 import os
 import subprocess
+import locale
 
 # Table de correspondance pour les messages personnalisés
 SCRIPT_MESSAGES = {
@@ -15,75 +16,70 @@ SCRIPT_MESSAGES = {
     },
     "wazuh/config.sh": {
         "start": "🔄 Configuration de Wazuh en cours...",
-        "success": "✅ Configuration de Wazuh terminé avec succès.",
+        "success": "✅ Configuration de Wazuh terminée avec succès.",
         "failure": "❌ Échec du déploiement de Wazuh."
     },
 }
 
-def find_bash_scripts(current_dir, ignore_scripts=None):
-    """
-    Trouve tous les fichiers .sh dans les sous-dossiers directement liés au répertoire courant.
-    Permet d'ignorer certains fichiers spécifiques.
-    """
-    if ignore_scripts is None:
-        ignore_scripts = []
+# Liste ordonnée des scripts à exécuter
+ORDERED_SCRIPTS = [
+    "utils/docker-install.sh",  # Docker doit être installé en premier
+    "wazuh/install.sh",         # Ensuite, installer Wazuh
+    "wazuh/config.sh"  # Configuration de Wazuh
+]
 
-    scripts = []
-    for folder in os.listdir(current_dir):
-        folder_path = os.path.join(current_dir, folder)
-        if os.path.isdir(folder_path):  # Vérifie si c'est un dossier
-            for file in os.listdir(folder_path):
-                if file.endswith(".sh") and file not in ignore_scripts:
-                    relative_path = os.path.join(folder, file)  # Chemin relatif pour correspondre à la table
-                    scripts.append(relative_path)
-    return scripts
-
-def execute_script(script_path):
+def detect_language():
     """
-    Exécute un script Bash avec des messages personnalisés gérés depuis le dictionnaire SCRIPT_MESSAGES.
+    Détecte la langue du système pour adapter la réponse automatique aux prompts.
     """
-    messages = SCRIPT_MESSAGES.get(script_path, {
-        "start": f"🔄 Exécution du script : {script_path}",
-        "success": f"✅ Succès : {script_path}",
-        "failure": f"❌ Échec : {script_path}"
-    })
+    # Détecter la langue en utilisant la variable d'environnement LANG
+    lang = locale.getdefaultlocale()[0]
+    if lang and lang.startswith('fr'):  # Si la langue est française
+        return "o/n"
+    else:  # Par défaut, on suppose que la langue est l'anglais
+        return "y/n"
 
+def execute_script(script_path, messages):
+    """
+    Exécute un script Bash en affichant uniquement les messages définis dans SCRIPT_MESSAGES.
+    Redirige les sorties indésirables.
+    """
     print(messages["start"])
+
+    # Détecter la langue et définir la réponse appropriée pour les prompts
+    auto_response = detect_language()
+
     try:
-        # Exécuter le script avec suppression des sorties dans le terminal
+        # Exécution du script avec suppression des sorties inutiles et désactivation des interactions
         result = subprocess.run(
             ["bash", script_path],
             check=True,
-            stdout=subprocess.PIPE,  # Capture la sortie standard
-            stderr=subprocess.PIPE,  # Capture la sortie d'erreur
-            text=True
+            stdout=subprocess.DEVNULL,  # Supprime la sortie standard
+            stderr=subprocess.DEVNULL,  # Supprime la sortie d'erreur
+            text=True,
+            input=f"{auto_response[0]}\n"  # Répond automatiquement "o" ou "y" selon la langue
         )
         print(messages["success"])
-        # Si besoin, afficher la sortie capturée
-        if result.stdout.strip():
-            print(f"📄 Sortie :\n{result.stdout.strip()}")
     except subprocess.CalledProcessError as e:
         print(messages["failure"])
-        print(f"💡 Erreur :\n{e.stderr.strip()}")
+        print(f"💡 Détails de l'erreur : {e.stderr.strip()}")
 
 def deploy_scripts():
     """
-    Détecte et exécute tous les scripts Bash dans les sous-dossiers du répertoire courant,
-    en ignorant ceux spécifiés.
+    Exécute les scripts Bash dans l'ordre défini par ORDERED_SCRIPTS,
+    en utilisant uniquement les messages définis dans SCRIPT_MESSAGES.
     """
     current_dir = os.getcwd()  # Répertoire contenant deploi.py
-    
-    # Liste des scripts à ignorer (par leur nom)
-    ignore_scripts = ["ignore_this.sh", "skip_me.sh"]
 
-    scripts = find_bash_scripts(current_dir, ignore_scripts)
-    
-    if not scripts:
-        print("📂 Aucun script trouvé.")
-        return
-    
-    for script in scripts:
-        execute_script(script)
+    for script in ORDERED_SCRIPTS:
+        script_path = os.path.join(current_dir, script)
+        if script in SCRIPT_MESSAGES:
+            if os.path.exists(script_path):
+                execute_script(script_path, SCRIPT_MESSAGES[script])
+            else:
+                print(f"⚠️ Script introuvable : {script_path}")
+        else:
+            print(f"⚠️ Aucun message défini pour {script}. Script ignoré.")
 
 if __name__ == "__main__":
     deploy_scripts()
