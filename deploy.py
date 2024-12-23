@@ -3,6 +3,11 @@ import subprocess
 
 # Table de correspondance pour les messages personnalisés
 SCRIPT_MESSAGES = {
+    "utils/docker-install.sh": {
+        "start": "🔄 Installation de Docker en cours...",
+        "success": "✅ Installation de Docker terminée avec succès.",
+        "failure": "❌ Échec de l'installation de Docker."
+    },
     "wazuh/install.sh": {
         "start": "🔄 Installation de Wazuh en cours...",
         "success": "✅ Installation de Wazuh terminée avec succès.",
