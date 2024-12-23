@@ -5,17 +5,17 @@ import locale
 # Table de correspondance pour les messages personnalisés
 SCRIPT_MESSAGES = {
     "utils/docker-install.sh": {
-        "start": "🔄 Installation de Docker en cours...",
+        "start": "� Installation de Docker en cours...",
         "success": "✅ Installation de Docker terminée avec succès.",
         "failure": "❌ Échec de l'installation de Docker."
     },
     "wazuh/install.sh": {
-        "start": "🔄 Installation de Wazuh en cours...",
+        "start": "� Installation de Wazuh en cours...",
         "success": "✅ Installation de Wazuh terminée avec succès.",
         "failure": "❌ Échec de l'installation de Wazuh."
     },
     "wazuh/config.sh": {
-        "start": "🔄 Configuration de Wazuh en cours...",
+        "start": "� Configuration de Wazuh en cours...",
         "success": "✅ Configuration de Wazuh terminée avec succès.",
         "failure": "❌ Échec du déploiement de Wazuh."
     },
@@ -32,8 +32,8 @@ def detect_language():
     """
     Détecte la langue du système pour adapter la réponse automatique aux prompts.
     """
-    # Détecter la langue en utilisant la variable d'environnement LANG
-    lang = locale.getdefaultlocale()[0]
+    # Détecter la locale courante sans utiliser getdefaultlocale()
+    lang = locale.getlocale()[0]
     if lang and lang.startswith('fr'):  # Si la langue est française
         return "o/n"
     else:  # Par défaut, on suppose que la langue est l'anglais
@@ -62,7 +62,7 @@ def execute_script(script_path, messages):
         print(messages["success"])
     except subprocess.CalledProcessError as e:
         print(messages["failure"])
-        print(f"💡 Détails de l'erreur : {e.stderr.strip()}")
+        print(f"� Détails de l'erreur : {e.stderr.strip()}")
 
 def deploy_scripts():
     """
@@ -83,4 +83,3 @@ def deploy_scripts():
 
 if __name__ == "__main__":
     deploy_scripts()
-
