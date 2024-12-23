@@ -15,22 +15,88 @@ check_docker_installed() {
     fi
 }
 
-# Mettre à jour le système et installer les prérequis
+# Désinstaller les paquets conflictuels
+uninstall_conflicting_packages() {
+    echo "[INFO] Désinstallation des paquets conflictuels..."
+    case "$1" in
+        ubuntu)
+            for pkg in docker.io docker-doc docker-compose docker-compose-v2 podman-docker containerd runc; do
+                sudo apt-get remove -y $pkg
+            done
+            ;;
+        debian)
+            for pkg in docker.io docker-doc docker-compose podman-docker containerd runc; do
+                sudo apt-get remove -y $pkg
+            done
+            ;;
+        rhel)
+            sudo dnf remove -y \
+                docker \
+                docker-client \
+                docker-client-latest \
+                docker-common \
+                docker-latest \
+                docker-latest-logrotate \
+                docker-logrotate \
+                docker-engine \
+                podman \
+                runc
+            ;;
+        fedora)
+            sudo dnf remove -y \
+                docker \
+                docker-client \
+                docker-client-latest \
+                docker-common \
+                docker-latest \
+                docker-latest-logrotate \
+                docker-logrotate \
+                docker-selinux \
+                docker-engine-selinux \
+                docker-engine
+            ;;
+        centos|rocky|almalinux)
+            sudo dnf remove -y \
+                docker \
+                docker-client \
+                docker-client-latest \
+                docker-common \
+                docker-latest \
+                docker-latest-logrotate \
+                docker-logrotate \
+                docker-engine
+            ;;
+        *)
+            echo "[ERROR] Distribution non prise en charge pour la désinstallation des paquets conflictuels." >&2
+            exit 1
+            ;;
+    esac
+    echo "[INFO] Paquets conflictuels désinstallés avec succès."
+}
+
+# Installer les prérequis
 install_prerequisites() {
     echo "[INFO] Installation des paquets nécessaires..."
     case "$1" in
         ubuntu|debian)
+            apt install -y sudo
             sudo apt-get update && sudo apt-get install -y \
                 ca-certificates \
                 curl \
                 gnupg \
                 lsb-release
             ;;
-        centos|fedora|rhel|rocky|almalinux)
+        centos|rhel|rocky|almalinux)
             sudo yum install -y \
                 yum-utils \
                 device-mapper-persistent-data \
                 lvm2 \
+                ca-certificates \
+                curl
+            ;;
+        fedora)
+            sudo dnf install -y \
+                dnf-plugins-core \
                 ca-certificates \
                 curl
             ;;
@@ -41,19 +107,32 @@ install_prerequisites() {
     esac
 }
 
-# Ajouter le dépôt officiel Docker
+# Ajouter le dépôt Docker
 add_docker_repo() {
     echo "[INFO] Ajout du dépôt Docker..."
     case "$1" in
-        ubuntu|debian)
-            sudo mkdir -p /etc/apt/keyrings
-            curl -fsSL https://download.docker.com/linux/$1/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
-            echo \  
-                "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] \
-                https://download.docker.com/linux/$1 \
-                $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+        ubuntu)
+            sudo install -m 0755 -d /etc/apt/keyrings
+            sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+            sudo chmod a+r /etc/apt/keyrings/docker.asc
+            echo \
+                "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu \
+                $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+            sudo apt-get update
             ;;
-        centos|rhel|rocky|almalinux)
+        debian)
+            sudo install -m 0755 -d /etc/apt/keyrings
+            sudo curl -fsSL https://download.docker.com/linux/debian/gpg -o /etc/apt/keyrings/docker.asc
+            sudo chmod a+r /etc/apt/keyrings/docker.asc
+            echo \
+                "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/debian \
+                $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+            sudo apt-get update
+            ;;
+        centos|rhel)
+            sudo yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+            ;;
+        rocky|almalinux)
             sudo yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
             ;;
         fedora)
@@ -71,7 +150,7 @@ install_docker() {
     echo "[INFO] Installation de Docker..."
     case "$1" in
         ubuntu|debian)
-            sudo apt-get update && sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+            sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
             ;;
         centos|rhel|rocky|almalinux)
             sudo yum install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
@@ -104,16 +183,16 @@ test_docker() {
     fi
 }
 
-# Détection de la distribution Linux
+# Script principal
 OS="$(. /etc/os-release && echo $ID)"
 echo "[INFO] Distribution détectée : $OS"
 
 check_docker_installed
+uninstall_conflicting_packages "$OS"
 install_prerequisites "$OS"
 add_docker_repo "$OS"
 install_docker "$OS"
 enable_and_start_docker
-test_docker
+#test_docker
 
-echo "[INFO] Installation de Docker terminée avec succès."
-
+#echo "[INFO] Installation de Docker terminée avec succès."
