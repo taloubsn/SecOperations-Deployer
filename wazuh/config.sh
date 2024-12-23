@@ -2,7 +2,7 @@
 
 # Fonction pour vérifier l'existence et la lisibilité du fichier .env
 check_env_file() {
-    ENV_FILE="../.env"
+    ENV_FILE=".env"
     if [ ! -f "$ENV_FILE" ]; then
         echo "Erreur : le fichier .env est manquant à l'emplacement $ENV_FILE." >&2
         exit 1
