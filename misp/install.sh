@@ -44,8 +44,6 @@ setup_misp_docker() {
     }
 
     # Vérifier et charger les variables d'environnement
-    check_env_file
-    load_env_variables
 
     # Modifier la ligne BASE_URL dans le fichier .env
     sed -i "s|^BASE_URL=.*|BASE_URL=https://$IP:4433|" .env || {
@@ -64,10 +62,35 @@ setup_misp_docker() {
     }
 
     echo "Configuration terminée avec succès."
+
+    # Ajouter les variables du .env local dans le .env principal
+    merge_env_files
+}
+
+# Fonction pour ajouter les nouvelles variables dans le .env principal
+merge_env_files() {
+    PARENT_ENV_FILE="../.env"
+
+    if [ ! -f "$PARENT_ENV_FILE" ]; then
+        echo "Erreur : Le fichier .env principal n'existe pas à l'emplacement $PARENT_ENV_FILE. Création d'un nouveau fichier..."
+        cp .env "$PARENT_ENV_FILE" || {
+            echo "Erreur : Échec de la création du fichier .env principal." >&2
+            exit 1
+        }
+        echo "Fichier .env principal créé avec succès."
+    else
+        echo "Ajout des nouvelles variables au fichier .env principal..."
+        while IFS= read -r line; do
+            if ! grep -q "^${line%%=*}=" "$PARENT_ENV_FILE"; then
+                echo "$line" >> "$PARENT_ENV_FILE"
+            fi
+        done < .env
+        echo "Variables ajoutées au fichier .env principal avec succès."
+    fi
 }
 
 # Appeler la fonction de configuration
 load_env_variables
 check_env_file
 setup_misp_docker
-
+merge_env_files
