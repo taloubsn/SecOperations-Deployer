@@ -25,6 +25,8 @@ prepare_shuffle() {
     echo "Désactivation de l'échange mémoire (swap)..."
     sudo swapoff -a
     echo "Swap désactivé."
+
+    sudo sysctl -w vm.max_map_count=262144
 }
 
 # Fonction pour modifier le fichier docker-compose.yml
