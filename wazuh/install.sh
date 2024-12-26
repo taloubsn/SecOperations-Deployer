@@ -70,7 +70,7 @@ install_packages() {
 # Installation pour Debian/Ubuntu
 install_debian() {
     apt update -y >/dev/null 2>&1 && apt upgrade -y >/dev/null 2>&1 || return 1
-    install_packages "apt" curl git unzip dos2unix wget vim nano debconf adduser procps gnupg apt-transport-https || return 1
+    install_packages "apt" curl git unzip dos2unix wget vim nano debconf adduser procps gnupg apt-transport-https net-tools|| return 1
     import_gpg_key "https://packages.wazuh.com/key/GPG-KEY-WAZUH" || return 1
     add_repo "/etc/apt/sources.list.d/wazuh.list" "deb [signed-by=/usr/share/keyrings/wazuh.gpg] https://packages.wazuh.com/4.x/apt/ stable main" || return 1
     apt update -y >/dev/null 2>&1 || return 1
