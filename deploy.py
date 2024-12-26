@@ -69,7 +69,7 @@ ORDERED_SCRIPTS = [
 # Liste des sous-dossiers contenant des fichiers docker-compose.yml
 SUBFOLDERS = [
     "shuffle",
-    "misp",
+    "misp-docker",
     "dfir-iris",
 ]
 
@@ -156,12 +156,12 @@ def deploy_docker_compose_projects():
         if os.path.exists(docker_compose_file):
             #print(f"� Traitement du dossier : {folder}")
 
-            if folder == "misp":
+            if folder == "misp-docker":
                 # Étape 1 : Construire les images Docker pour MISP
                 execute_docker_compose_command(folder_path, "build", SCRIPT_MESSAGES["misp build"])
                 # Étape 2 : Lancer les conteneurs Docker pour MISP
                 execute_docker_compose_command(folder_path, "up -d", SCRIPT_MESSAGES["misp up"])
-            elif folder == "shuffle":
+            elif folder == "Shuffle":
                 # Lancer les conteneurs Docker pour Shuffle
                 execute_docker_compose_command(folder_path, "up -d", SCRIPT_MESSAGES["shuffle up"])
             elif folder == "dfir-iris":
