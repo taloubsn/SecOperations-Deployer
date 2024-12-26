@@ -34,6 +34,12 @@ SCRIPT_MESSAGES = {
         "success": "✅ Clonage et configuration de Misp terminée avec succès.",
         "failure": "❌ Échec du Clonage et de la configuration de Misp."
     },
+    "Shuffle-docker/config.sh": {
+        "start": "� Clonage et configuration de Shuffle en cours...",
+        "success": "✅ Clonage et configuration de Shuffle terminée avec succès.",
+        "failure": "❌ Échec du Clonage et de la configuration de Suffle."
+    },
+
     "misp build": {
         "start": "� Construction des images Docker pour MISP en cours...",
         "success": "✅ Construction des images Docker pour MISP terminée avec succès.",
@@ -64,11 +70,13 @@ ORDERED_SCRIPTS = [
     "graylog/install.sh",       # Installation de graylog
     "graylog/config.sh",        # Configuration de graylog
     "misp/install.sh",          # Clonage et configuration de Misp
+    "Shuffle-docker/install.sh",          # Clonage et configuration de Shuffle
+
 ]
 
 # Liste des sous-dossiers contenant des fichiers docker-compose.yml
 SUBFOLDERS = [
-    "shuffle",
+    "Shuffle",
     "misp-docker",
     "dfir-iris",
 ]
