@@ -9,7 +9,28 @@ GRAYLOG_ROOT_CA="$GRAYLOG_CERTS_DIR/root-ca.pem"
 GRAYLOG_SERVER_CONFIG="/etc/default/graylog-server"
 GRAYLOG_CONF="/etc/graylog/server/server.conf"
 WAZUH_PASSWORD_FILE="/var/ossec/etc/wazuh_passwords.log"
-ENV_FILE=".env"
+# Fonction pour vérifier l'existence et la lisibilité du fichier .env
+check_env_file() {
+    ENV_FILE=".env"
+    if [ ! -f "$ENV_FILE" ]; then
+        echo "Erreur : le fichier .env est manquant à l'emplacement $ENV_FILE." >&2
+        exit 1
+    fi
+    if [ ! -r "$ENV_FILE" ]; then
+        echo "Erreur : le fichier .env n'est pas lisible. Vérifiez les permissions du fichier." >&2
+        exit 1
+    fi
+}
+
+# Fonction pour charger les variables d'environnement depuis le fichier .env
+load_env_variables() {
+    echo "Chargement des variables d'environnement depuis .env..."
+    source "$ENV_FILE"
+    if [ -z "$GRAYLOG_PASSWORD" ] || [ -z "$IP" ]; then
+        echo "Erreur : Certaines variables d'environnement sont manquantes dans le fichier .env." >&2
+        exit 1
+    fi
+}
 
 # Fonction pour ajouter le certificat et configurer Java
 add_certificate() {
@@ -65,14 +86,6 @@ configure_server_conf() {
 
     echo "Configuration de $GRAYLOG_CONF..."
 
-    # Récupération de la variable graylog_password depuis .env
-    if [ ! -f "$ENV_FILE" ]; then
-        echo "Erreur : Le fichier $ENV_FILE est introuvable." >&2
-        exit 1
-    fi
-
-    source "$ENV_FILE" || { echo "Erreur lors du chargement des variables depuis $ENV_FILE." >&2; exit 1; }
-
     if [ -z "$GRAYLOG_PASSWORD" ]; then
         echo "Erreur : La variable 'graylog_password' est introuvable dans $ENV_FILE." >&2
         exit 1
@@ -125,10 +138,6 @@ configure_server_conf() {
 }
 
 set_ip(){
-    if [[ ! -f $ENV_FILE ]]; then
-        echo "Fichier $ENV_FILE introuvable. Assurez-vous qu'il existe."
-    exit 1
-    fi
 
     # Extraction de l'adresse IP
     IP=$(grep -E "^IP=" "$ENV_FILE" | cut -d '=' -f2 | tr -d '"')
@@ -178,6 +187,8 @@ start_and_verify_mongodb() {
     fi
 }
 # Appel des fonctions
+check_env_file
+load_env_variables
 add_certificate
 configure_server_conf
 set_ip
