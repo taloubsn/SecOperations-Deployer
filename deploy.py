@@ -20,14 +20,14 @@ SCRIPT_MESSAGES = {
         "failure": "❌ Échec du déploiement de Wazuh."
     },    
     "graylog/install.sh": {
-    "start": "� Installation de Graylog en cours...",
-    "success": "✅ Installation de Graylog terminée avec succès.",
-    "failure": "❌ Échec de l'installation de Graylog."
+        "start": "� Installation de Graylog en cours...",
+        "success": "✅ Installation de Graylog terminée avec succès.",
+        "failure": "❌ Échec de l'installation de Graylog."
     },
     "graylog/config.sh": {
-    "start": "� Configuration de Graylog en cours...",
-    "success": "✅ Configuration de Graylog terminée avec succès.",
-    "failure": "❌ Échec du déploiement de Graylog."
+        "start": "� Configuration de Graylog en cours...",
+        "success": "✅ Configuration de Graylog terminée avec succès.",
+        "failure": "❌ Échec du déploiement de Graylog."
     },
 
 
@@ -37,9 +37,9 @@ SCRIPT_MESSAGES = {
 ORDERED_SCRIPTS = [
     "utils/docker-install.sh",  # Docker doit être installé en premier
     "wazuh/install.sh",         # Ensuite, installer Wazuh
-    "wazuh/config.sh"  # Configuration de Wazuh
-    "graylog/install.sh" # Installation de graylog
-    "graylog/config.sh" # Configuration de graylog
+    "wazuh/config.sh",  # Configuration de Wazuh
+    "graylog/install.sh", # Installation de graylog
+    "graylog/config.sh", # Configuration de graylog
 ]
 
 def detect_language():
