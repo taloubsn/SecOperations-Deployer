@@ -119,14 +119,6 @@ configure_wazuh_manager_filebeat() {
         exit 1
     fi
 
-
-    # Modifier le port du serveur dans le fichier de configuration
-    if sed -i "s|server.port:.*|server.port: 5601|" "$OPENSEARCH_CONFIG"; then
-        echo "Fichier opensearch_dashboards.yml mis à jour pour définir server.port à 5601."
-    else
-        echo "Erreur lors de la modification du port dans le fichier opensearch_dashboards.yml." >&2
-        exit 1
-    fi
 }
 
 # Fonction pour configurer Wazuh Dashboard
