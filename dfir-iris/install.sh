@@ -25,8 +25,6 @@ load_env_variables() {
 
 # Fonction pour cloner et configurer DFIR-IRIS
 configure_dfir_iris() {
-    # Définir le chemin vers le fichier .env principal
-    local MAIN_ENV_PATH="../.env"
 
     echo "Clonage du dépôt iris-web..."
     git clone https://github.com/dfir-iris/iris-web.git || { echo "Erreur lors du clonage du dépôt."; return 1; }
@@ -40,14 +38,34 @@ configure_dfir_iris() {
     echo "Configuration du fichier .env..."
     cp .env.model .env || { echo "Erreur lors de la copie du fichier .env.model."; return 1; }
 
-    echo "Copie du fichier .env vers $MAIN_ENV_PATH..."
-    cp .env "$MAIN_ENV_PATH" || { echo "Erreur lors de la copie du fichier .env."; return 1; }
-
     echo "Configuration terminée avec succès."
+    merge_env_files
+}
+
+# Fonction pour ajouter les nouvelles variables dans le .env principal
+merge_env_files() {
+    PARENT_ENV_FILE="../.env"
+
+    if [ ! -f "$PARENT_ENV_FILE" ]; then
+        echo "Erreur : Le fichier .env principal n'existe pas à l'emplacement $PARENT_ENV_FILE. Création d'un nouveau fichier..."
+        cp .env "$PARENT_ENV_FILE" || {
+            echo "Erreur : Échec de la création du fichier .env principal." >&2
+            exit 1
+        }
+        echo "Fichier .env principal créé avec succès."
+    else
+        echo "Ajout des nouvelles variables au fichier .env principal..."
+        while IFS= read -r line; do
+            if ! grep -q "^${line%%=*}=" "$PARENT_ENV_FILE"; then
+                echo "$line" >> "$PARENT_ENV_FILE"
+            fi
+        done < .env
+        echo "Variables ajoutées au fichier .env principal avec succès."
+    fi
 }
 
 # Appeler la fonction
 load_env_variables
 check_env_file
 configure_dfir_iris
-
+merge_env_files
