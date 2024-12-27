@@ -64,9 +64,9 @@ SCRIPT_MESSAGES = {
 
 # Liste ordonnée des scripts à exécuter
 ORDERED_SCRIPTS = [
-    "utils/docker-install.sh",  # Docker doit être installé en premier
     "wazuh/install.sh",         # Ensuite, installer Wazuh
     "wazuh/config.sh",          # Configuration de Wazuh
+    "utils/docker-install.sh",  # Docker doit être installé en premier
     "graylog/install.sh",       # Installation de graylog
     "graylog/config.sh",        # Configuration de graylog
     "misp/install.sh",          # Clonage et configuration de Misp
