@@ -65,7 +65,7 @@ merge_env_files() {
 }
 
 # Appeler la fonction
-load_env_variables
 check_env_file
+load_env_variables
 configure_dfir_iris
 merge_env_files

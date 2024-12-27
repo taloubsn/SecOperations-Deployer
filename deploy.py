@@ -28,8 +28,14 @@ SUBFOLDERS = [
 def clear_terminal():
     """
     Efface le terminal pour un affichage propre.
+    Fonctionne de manière fiable sur Linux.
     """
-    os.system('cls' if os.name == 'nt' else 'clear')
+    try:
+        # Échappement ANSI pour nettoyer le terminal
+        sys.stdout.write("\033[H\033[J")
+        sys.stdout.flush()
+    except Exception as e:
+        print(f"Erreur lors de l'effacement du terminal : {e}")
 
 def detect_language():
     """

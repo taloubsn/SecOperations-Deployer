@@ -90,7 +90,7 @@ merge_env_files() {
 }
 
 # Appeler la fonction de configuration
-load_env_variables
 check_env_file
+load_env_variables
 setup_misp_docker
 merge_env_files

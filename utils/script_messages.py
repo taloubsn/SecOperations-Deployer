@@ -35,7 +35,7 @@ SCRIPT_MESSAGES = {
         "success": "✅ Clonage et configuration de Shuffle terminée avec succès.",
         "failure": "❌ Échec du Clonage et de la configuration de Suffle."
     },
-     "iris-web/install.sh": {
+     "dfir-iris/install.sh": {
         "start": "� Clonage et configuration de iris-web en cours...",
         "success": "✅ Clonage et configuration de iris-web terminée avec succès.",
         "failure": "❌ Échec du Clonage et de la configuration de iris-web."
