@@ -25,15 +25,20 @@ SCRIPT_MESSAGES = {
         "success": "✅ Configuration de Graylog terminée avec succès.",
         "failure": "❌ Échec du déploiement de Graylog."
     },
-    "misp/config.sh": {
+    "misp/install.sh": {
         "start": "� Clonage et configuration de Misp en cours...",
         "success": "✅ Clonage et configuration de Misp terminée avec succès.",
         "failure": "❌ Échec du Clonage et de la configuration de Misp."
     },
-    "Shuffle-docker/config.sh": {
+    "Shuffle-docker/install.sh": {
         "start": "� Clonage et configuration de Shuffle en cours...",
         "success": "✅ Clonage et configuration de Shuffle terminée avec succès.",
         "failure": "❌ Échec du Clonage et de la configuration de Suffle."
+    },
+     "iris-web/install.sh": {
+        "start": "� Clonage et configuration de iris-web en cours...",
+        "success": "✅ Clonage et configuration de iris-web terminée avec succès.",
+        "failure": "❌ Échec du Clonage et de la configuration de iris-web."
     },
 
     "misp build": {
@@ -50,6 +55,11 @@ SCRIPT_MESSAGES = {
         "start": "� Démarrage des conteneurs Docker pour Shuffle en cours...",
         "success": "✅ Conteneurs Docker pour Shuffle démarrés avec succès.",
         "failure": "❌ Échec du démarrage des conteneurs Docker pour Shuffle."
+    },
+    "dfir-iris pull": {
+        "start": "📥 Téléchargement des images Docker pour DFIR-IRIS...",
+        "success": "✅ Téléchargement des images Docker pour DFIR-IRIS terminé avec succès.",
+        "failure": "❌ Échec du téléchargement des images Docker pour DFIR-IRIS."
     },
     "dfir-iris up": {
         "start": "� Démarrage des conteneurs Docker pour DFIR-IRIS en cours...",

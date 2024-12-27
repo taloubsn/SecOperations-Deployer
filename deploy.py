@@ -2,6 +2,8 @@ import os
 import subprocess
 import locale
 from utils.script_messages import SCRIPT_MESSAGES  # Import des messages
+from utils.display_banner import display_banner  # Import de la bannière
+from utils.display_urls import display_urls  # Import des URLs
 
 # Liste ordonnée des scripts à exécuter
 ORDERED_SCRIPTS = [
@@ -12,15 +14,22 @@ ORDERED_SCRIPTS = [
     "graylog/config.sh",        # Configuration de graylog
     "misp/install.sh",          # Clonage et configuration de Misp
     "Shuffle-docker/install.sh",          # Clonage et configuration de Shuffle
+    "dfir-iris/install.sh",          # Clonage et configuration de iris-web
 
 ]
 
 # Liste des sous-dossiers contenant des fichiers docker-compose.yml
 SUBFOLDERS = [
-    "Shuffle",
     "misp-docker",
-    "dfir-iris",
+    "Shuffle",
+    "iris-web",
 ]
+
+def clear_terminal():
+    """
+    Efface le terminal pour un affichage propre.
+    """
+    os.system('cls' if os.name == 'nt' else 'clear')
 
 def detect_language():
     """
@@ -115,10 +124,15 @@ def deploy_docker_compose_projects():
                 execute_docker_compose_command(folder_path, "up -d", SCRIPT_MESSAGES["shuffle up"])
             elif folder == "dfir-iris":
                 # Lancer les conteneurs Docker pour DFIR-IRIS
+                execute_docker_compose_command(folder_path, "pull", SCRIPT_MESSAGES["dfir-iris pull"])
                 execute_docker_compose_command(folder_path, "up -d", SCRIPT_MESSAGES["dfir-iris up"])
         else:
             print(f"⚠️ Aucun fichier docker-compose.yml trouvé dans {folder_path}.")
 
 if __name__ == "__main__":
+    display_banner()  # Affiche la bannière
+    input("\nAppuyez sur Entrée pour continuer...")  # Pause avant de continuer
+    clear_terminal
     deploy_scripts()
     deploy_docker_compose_projects()
+    display_urls()
