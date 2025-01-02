@@ -1,69 +1,70 @@
-# Table de correspondance pour les messages personnalisés
+# Mapping table for custom messages
 SCRIPT_MESSAGES = {
     "utils/docker-install.sh": {
-        "start": "� Installation de Docker en cours...",
-        "success": "✅ Installation de Docker terminée avec succès.",
-        "failure": "❌ Échec de l'installation de Docker."
+        "start": "� Installing Docker...",
+        "success": "✅ Docker installation completed successfully.",
+        "failure": "❌ Docker installation failed."
     },
     "wazuh/install.sh": {
-        "start": "� Installation de Wazuh en cours...",
-        "success": "✅ Installation de Wazuh terminée avec succès.",
-        "failure": "❌ Échec de l'installation de Wazuh."
+        "start": "� Installing Wazuh...",
+        "success": "✅ Wazuh installation completed successfully.",
+        "failure": "❌ Wazuh installation failed."
     },
     "wazuh/config.sh": {
-        "start": "� Configuration de Wazuh en cours...",
-        "success": "✅ Configuration de Wazuh terminée avec succès.",
-        "failure": "❌ Échec du déploiement de Wazuh."
+        "start": "� Configuring Wazuh...",
+        "success": "✅ Wazuh configuration completed successfully.",
+        "failure": "❌ Wazuh deployment failed."
     },
     "graylog/install.sh": {
-        "start": "� Installation de Graylog en cours...",
-        "success": "✅ Installation de Graylog terminée avec succès.",
-        "failure": "❌ Échec de l'installation de Graylog."
+        "start": "� Installing Graylog...",
+        "success": "✅ Graylog installation completed successfully.",
+        "failure": "❌ Graylog installation failed."
     },
     "graylog/config.sh": {
-        "start": "� Configuration de Graylog en cours...",
-        "success": "✅ Configuration de Graylog terminée avec succès.",
-        "failure": "❌ Échec du déploiement de Graylog."
+        "start": "� Configuring Graylog...",
+        "success": "✅ Graylog configuration completed successfully.",
+        "failure": "❌ Graylog deployment failed."
     },
     "misp/install.sh": {
-        "start": "� Clonage et configuration de Misp en cours...",
-        "success": "✅ Clonage et configuration de Misp terminée avec succès.",
-        "failure": "❌ Échec du Clonage et de la configuration de Misp."
+        "start": "� Cloning and configuring MISP...",
+        "success": "✅ MISP cloning and configuration completed successfully.",
+        "failure": "❌ MISP cloning and configuration failed."
     },
     "Shuffle-docker/install.sh": {
-        "start": "� Clonage et configuration de Shuffle en cours...",
-        "success": "✅ Clonage et configuration de Shuffle terminée avec succès.",
-        "failure": "❌ Échec du Clonage et de la configuration de Suffle."
+        "start": "� Cloning and configuring Shuffle...",
+        "success": "✅ Shuffle cloning and configuration completed successfully.",
+        "failure": "❌ Shuffle cloning and configuration failed."
     },
      "dfir-iris/install.sh": {
-        "start": "� Clonage et configuration de iris-web en cours...",
-        "success": "✅ Clonage et configuration de iris-web terminée avec succès.",
-        "failure": "❌ Échec du Clonage et de la configuration de iris-web."
+        "start": "� Cloning and configuring iris-web...",
+        "success": "✅ iris-web cloning and configuration completed successfully.",
+        "failure": "❌ iris-web cloning and configuration failed."
     },
 
     "misp build": {
-        "start": "� Construction des images Docker pour MISP en cours...",
-        "success": "✅ Construction des images Docker pour MISP terminée avec succès.",
-        "failure": "❌ Échec de la construction des images Docker pour MISP."
+        "start": "� Building Docker images for MISP...",
+        "success": "✅ Docker image build for MISP completed successfully.",
+        "failure": "❌ Docker image build for MISP failed."
     },
     "misp up": {
-        "start": "� Démarrage des conteneurs Docker pour MISP en cours...",
-        "success": "✅ Conteneurs Docker pour MISP démarrés avec succès.",
-        "failure": "❌ Échec du démarrage des conteneurs Docker pour MISP."
+        "start": "� Starting Docker containers for MISP...",
+        "success": "✅ Docker containers for MISP started successfully.",
+        "failure": "❌ Starting Docker containers for MISP failed."
     },
     "shuffle up": {
-        "start": "� Démarrage des conteneurs Docker pour Shuffle en cours...",
-        "success": "✅ Conteneurs Docker pour Shuffle démarrés avec succès.",
-        "failure": "❌ Échec du démarrage des conteneurs Docker pour Shuffle."
+        "start": "� Starting Docker containers for Shuffle...",
+        "success": "✅ Docker containers for Shuffle started successfully.",
+        "failure": "❌ Starting Docker containers for Shuffle failed."
     },
     "dfir-iris pull": {
-        "start": "📥 Téléchargement des images Docker pour DFIR-IRIS...",
-        "success": "✅ Téléchargement des images Docker pour DFIR-IRIS terminé avec succès.",
-        "failure": "❌ Échec du téléchargement des images Docker pour DFIR-IRIS."
+        "start": "📥 Downloading Docker images for DFIR-IRIS...",
+        "success": "✅ Docker images for DFIR-IRIS downloaded successfully.",
+        "failure": "❌ Docker images for DFIR-IRIS download failed."
     },
     "dfir-iris up": {
-        "start": "� Démarrage des conteneurs Docker pour DFIR-IRIS en cours...",
-        "success": "✅ Conteneurs Docker pour DFIR-IRIS démarrés avec succès.",
-        "failure": "❌ Échec du démarrage des conteneurs Docker pour DFIR-IRIS."
+        "start": "� Starting Docker containers for DFIR-IRIS...",
+        "success": "✅ Docker containers for DFIR-IRIS started successfully.",
+        "failure": "❌ Starting Docker containers for DFIR-IRIS failed."
     },
 }
+

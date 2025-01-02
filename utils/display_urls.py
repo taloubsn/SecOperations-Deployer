@@ -1,25 +1,24 @@
 def display_urls():
     """
-    Affiche les URLs avec leurs IPs et ports pour l'accès aux interfaces web.
+    Displays the URLs with their IPs and ports for accessing the web interfaces.
     """
     urls = {
         "Wazuh": "https://<IP_ADDRESS>:5601 (Kibana)",
         "Graylog": "http://<IP_ADDRESS>:9000",
-        "MISP": "http://<IP_ADDRESS>:4433 (HTTPS)",
         "Shuffle": "https://<IP_ADDRESS>:3443",
         "DFIR-IRIS": "https://<IP_ADDRESS>",
     }
-    
+
     banner = """
     =============================================================
-                       Accès aux Interfaces Web
+                       Web Interface Access
     =============================================================
     """
     print(banner)
-    
+
     for tool, url in urls.items():
         print(f"  - {tool} : {url}")
-    
-    print("\nRemplacez <IP_ADDRESS> par l'adresse IP configurée.\n")
+
+    print("\nReplace <IP_ADDRESS> with the configured IP address.\n")
     print("=============================================================")
 
