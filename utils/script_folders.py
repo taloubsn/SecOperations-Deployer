@@ -5,7 +5,7 @@ ORDERED_SCRIPTS = [
     "utils/docker-install.sh",  # Docker doit être installé en premier
     "graylog/install.sh",       # Installation de graylog
     "graylog/config.sh",        # Configuration de graylog
-    "misp/install.sh",          # Clonage et configuration de Misp
+    #"misp/install.sh",          # Clonage et configuration de Misp
     "Shuffle-docker/install.sh",          # Clonage et configuration de Shuffle
     "dfir-iris/install.sh",          # Clonage et configuration de iris-web
 
@@ -13,7 +13,7 @@ ORDERED_SCRIPTS = [
 
 # Liste des sous-dossiers contenant des fichiers docker-compose.yml
 SUBFOLDERS = [
-    "misp-docker",
+    #"misp-docker",
     "Shuffle",
     "iris-web",
 ]
