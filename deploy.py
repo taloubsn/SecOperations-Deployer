@@ -7,17 +7,81 @@ from utils.display_urls import display_urls  # Import des URLs
 from utils.script_folders import SUBFOLDERS
 from utils.script_folders import ORDERED_SCRIPTS
 
-def clear_terminal():
-    """
-    Efface le terminal pour un affichage propre.
-    Fonctionne de manière fiable sur Linux.
-    """
+import psutil  # Librairie pour vérifier les ressources système
+
+def check_and_install_pip():
+    """Vérifie si 'pip' est installé, et l'installe si nécessaire."""
     try:
-        # Échappement ANSI pour nettoyer le terminal
-        sys.stdout.write("\033[H\033[J")
-        sys.stdout.flush()
-    except Exception as e:
-        print(f"Erreur lors de l'effacement du terminal : {e}")
+        # Vérifier si 'pip' est déjà installé
+        subprocess.check_call([sys.executable, "-m", "pip", "--version"])
+        print("pip est déjà installé.")
+    except subprocess.CalledProcessError:
+        print("pip non trouvé. Installation en cours...")
+        try:
+            # Installer pip si nécessaire
+            subprocess.check_call([sys.executable, "-m", "ensurepip", "--upgrade"])
+            print("pip installé avec succès.")
+        except subprocess.CalledProcessError as e:
+            print(f"Erreur lors de l'installation de pip: {e}")
+            sys.exit(1)
+
+def check_and_install_psutil():
+    """Vérifie si 'psutil' est installé, et l'installe si nécessaire."""
+    try:
+        import psutil  # Vérifie si psutil est installé
+    except ImportError:
+        print("Module 'psutil' non trouvé. Installation en cours...")
+        try:
+            subprocess.check_call([sys.executable, "-m", "pip", "install", "psutil"])  # Installe psutil
+            print("Module 'psutil' installé avec succès.")
+        except subprocess.CalledProcessError as e:
+            print(f"Erreur lors de l'installation de 'psutil': {e}")
+            sys.exit(1)
+
+# Fonction pour vérifier les ressources système
+def check_system_requirements():
+    cores = os.cpu_count()
+    memory = psutil.virtual_memory().total / (1024 ** 3)  # Convertir en Go
+    errors = []
+
+    if cores < 4:
+        errors.append(f"[ERROR]: 4 core CPUs required, but found {cores}.")
+    if memory < 1:
+        errors.append(f"[ERROR]: 16 GB of memory required, but found {memory:.2f} GB.")
+
+    return errors
+
+
+# Fonction pour afficher le menu principal
+def display_menu():
+    os.system('clear')  # Effacer le terminal
+    print("""
+The SecOperations tools  installation script, for Linux operating systems with DEB or RPM packages.
+This script supports the installation of all tools on x86_64  only.
+
+Following install options are available:
+  - Install wazuh, docker, graylog, shuffle et dfir-iris
+
+This script has successfully been tested on freshly installed Operating Systems:
+  - Ubuntu 20.04 LTS & 22.04 LTS
+  - Debian 11 & 12
+
+Requirements:
+  - 4vCPU
+  - 16 GB of RAM
+
+Usage:
+   $ python3 deploy.py
+
+Maintained by: Abibou DIALLO - https://www.linkedin.com/in/abiboudiallo
+
+---
+
+1) Install wazuh, docker, graylog, shuffle et dfir-iris
+2) Quit
+""")
+
+
 
 def detect_language():
     """
@@ -117,10 +181,32 @@ def deploy_docker_compose_projects():
         else:
             print(f"⚠️ Aucun fichier docker-compose.yml trouvé dans {folder_path}.")
 
-if __name__ == "__main__":
-    display_banner()  # Affiche la bannière
-    input("\nAppuyez sur Entrée pour continuer...")  # Pause avant de continuer
-    clear_terminal
+
+# Fonction pour installer les outils
+def install_tools():
+    print("Checking system requirements...")
+    errors = check_system_requirements()
+
+    if errors:
+        for error in errors:
+            print(error)
+        print("\n[ERROR]: Installation aborted. Please upgrade your system resources.")
+        return
     deploy_scripts()
     deploy_docker_compose_projects()
     display_urls()
+
+if __name__ == "__main__":
+    while True:
+        display_menu()
+        choice = input("Select an option: ").strip()
+        if choice == "1":
+            check_and_install_pip
+            check_and_install_psutil
+            install_tools()
+            input("\nPress Enter to return to the menu...")
+        elif choice == "2":
+            print("Exiting...")
+            break
+        else:
+            print("Invalid option. Please try again.")
