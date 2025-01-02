@@ -46,7 +46,7 @@ def check_system_requirements():
 
     if cores < 4:
         errors.append(f"[ERROR]: 4 core CPUs required, but found {cores}.")
-    if memory < 1:
+    if memory < 16:
         errors.append(f"[ERROR]: 16 GB of memory required, but found {memory:.2f} GB.")
 
     return errors
