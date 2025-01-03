@@ -196,6 +196,42 @@ def deploy_docker_compose_projects():
             print(f"⚠️ Aucun fichier docker-compose.yml trouvé dans {folder_path}.")
 
 
+# Définir le nom du conteneur DFIR-IRIS
+iriswebapp_app = "iriswebapp_app"  # Remplacez par le nom correct de votre conteneur
+
+def get_dfir_iris_admin_password(container_name):
+    try:
+        # Construire la commande avec le pipe et grep
+        command = f"docker logs {container_name} 2>&1 | grep 'WARNING :: post_init :: create_safe_admin'"
+
+        # Exécuter la commande dans le shell
+        result = subprocess.run(
+            command,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            shell=True  # Permet l'utilisation des pipes et des redirections
+        )
+        logs = result.stdout.strip()
+
+        # Vérifier et extraire le mot de passe
+        if "Administrator password:" in logs:
+            password = logs.split("Administrator password:")[-1].strip()
+            return password
+
+        return "Mot de passe non trouvé dans les logs."
+    except Exception as e:
+        return f"Erreur lors de la récupération du mot de passe : {e}"
+
+def show_dfir_iris_info():
+    password = get_dfir_iris_admin_password(iriswebapp_app)
+    print(f"IRIS user : administrator et le Mot de passe initial : {password}")
+
+if __name__ == "__main__":
+    show_dfir_iris_info()
+
+
+
 # Fonction pour installer les outils
 def install_tools():
     print("Checking system requirements...")
@@ -218,6 +254,7 @@ if __name__ == "__main__":
             check_and_install_pip()
             check_and_install_psutil()
             install_tools()
+            show_dfir_iris_info
             input("\nPress Enter to return to the menu...")
         elif choice == "2":
             print("Exiting...")
