@@ -25,12 +25,34 @@ def check_and_install_pip():
         except subprocess.CalledProcessError as e:
             print(f"Error during pip installation: {e}")
             sys.exit(1)
-    try:
-        # Silent pip upgrade
-        subprocess.run([sys.executable, "-m", "pip", "install", "--upgrade", "pip"], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-    except subprocess.CalledProcessError as e:
-        print(f"Error during pip upgrade: {e}")
-        sys.exit(1)
+
+
+def create_and_setup_virtualenv(env_name="myenv"):
+    """Creates a virtual environment, activates it, updates pip, and installs psutil."""
+    # Ensure pip is installed
+    check_and_install_pip()
+
+    # Step 1: Create a virtual environment
+    if not os.path.exists(env_name):
+        print(f"Creating virtual environment '{env_name}'...")
+        subprocess.run([sys.executable, "-m", "venv", env_name], check=True)
+    else:
+        print(f"Virtual environment '{env_name}' already exists.")
+
+    # Step 2: Activate the virtual environment and update pip
+    venv_python = os.path.join(env_name, "bin", "python")
+    if not os.path.exists(venv_python):
+        venv_python = os.path.join(env_name, "Scripts", "python")  # Windows compatibility
+
+    print("Upgrading pip in the virtual environment...")
+    subprocess.run([venv_python, "-m", "pip", "install", "--upgrade", "pip"], check=True)
+
+    # Step 3: Install psutil in the virtual environment
+    print("Installing psutil in the virtual environment...")
+    subprocess.run([venv_python, "-m", "pip", "install", "psutil"], check=True)
+
+    print(f"Virtual environment setup complete. Use '{venv_python}' to run scripts.")
+    
 
 def check_and_install_psutil():
     """Checks if 'psutil' is installed and installs it if necessary."""
@@ -40,7 +62,7 @@ def check_and_install_psutil():
         print("Downloading and installing psutil...")
         try:
             # Silent installation of psutil via pip
-            subprocess.run([sys.executable, "-m", "pip", "install", "psutil"], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            create_and_setup_virtualenv
             print("psutil successfully installed.")
         except subprocess.CalledProcessError as e:
             print(f"Error during psutil installation: {e}")
