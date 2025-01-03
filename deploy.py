@@ -84,8 +84,7 @@ def run_check_requirements():
 def display_menu():
     os.system('clear')  # Effacer le terminal
     print("""
-The SecOperations tools  installation script, for Linux operating systems with DEB or RPM packages.
-This script supports the installation of all tools on x86_64  only.
+The SecOperations tools installation script, for Linux operating systems with DEB packages.
 
 Following install options are available:
   - Install wazuh, docker, graylog, shuffle et dfir-iris
