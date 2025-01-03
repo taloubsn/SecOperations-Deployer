@@ -10,82 +10,31 @@ import sys
 import subprocess
 import sys
 
-def check_and_install_pip():
-    """Checks if 'pip' is installed and installs it if necessary."""
+import subprocess
+
+def run_check_requirements():
+    script_path = os.path.join("utils", "check_requirements.sh")
     try:
-        # Silent check for pip presence
-        subprocess.run([sys.executable, "-m", "pip", "--version"], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    except subprocess.CalledProcessError:
-        print("Downloading and installing pip...")
-        try:
-            # Silent installation of python3-pip via apt
-            subprocess.run(["apt", "update"], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-            subprocess.run(["apt", "install", "-y", "python3-pip"], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-            print("pip successfully installed.")
-        except subprocess.CalledProcessError as e:
-            print(f"Error during pip installation: {e}")
-            sys.exit(1)
+        # Exécution du script Bash
+        result = subprocess.run(
+            [script_path],          # Commande à exécuter
+            check=True,                  # Lève une exception si le code de retour n'est pas 0
+            stdout=subprocess.DEVNULL,      # Capture la sortie standard
+            stderr=subprocess.DEVNULL,      # Capture la sortie d'erreur
+            text=True                    # Retourne des chaînes de caractères au lieu de bytes
+        )
+        # Affichage de la sortie standard
+        print("Output:\n", result.stdout)
+    except subprocess.CalledProcessError as e:
+        # En cas d'erreur, afficher les détails
+        print("Error while running the script:")
+        print("Exit Code:", e.returncode)
+        print("Standard Output:\n", e.stdout)
+        print("Standard Error:\n", e.stderr)
 
-
-def create_and_setup_virtualenv(env_name="myenv"):
-    """Creates a virtual environment, activates it, updates pip, and installs psutil."""
-    # Ensure pip is installed
-    check_and_install_pip()
-
-    # Step 1: Create a virtual environment
-    if not os.path.exists(env_name):
-        print(f"Creating virtual environment '{env_name}'...")
-        subprocess.run([sys.executable, "-m", "venv", env_name], check=True)
-    else:
-        print(f"Virtual environment '{env_name}' already exists.")
-
-    # Step 2: Activate the virtual environment and update pip
-    venv_python = os.path.join(env_name, "bin", "python")
-    if not os.path.exists(venv_python):
-        venv_python = os.path.join(env_name, "Scripts", "python")  # Windows compatibility
-
-    print("Upgrading pip in the virtual environment...")
-    subprocess.run([venv_python, "-m", "pip", "install", "--upgrade", "pip"], check=True)
-
-    # Step 3: Install psutil in the virtual environment
-    print("Installing psutil in the virtual environment...")
-    subprocess.run([venv_python, "-m", "pip", "install", "psutil"], check=True)
-
-    print(f"Virtual environment setup complete. Use '{venv_python}' to run scripts.")
-    
-
-def check_and_install_psutil():
-    """Checks if 'psutil' is installed and installs it if necessary."""
-    try:
-        import psutil  # Check if psutil is installed
-    except ImportError:
-        print("Downloading and installing psutil...")
-        try:
-            # Silent installation of psutil via pip
-            create_and_setup_virtualenv
-            print("psutil successfully installed.")
-        except subprocess.CalledProcessError as e:
-            print(f"Error during psutil installation: {e}")
-            sys.exit(1)
-    finally:
-        # Import psutil after installation
-        global psutil
-        import psutil
-
-
-# Fonction pour vérifier les ressources système
-def check_system_requirements():
-    cores = os.cpu_count()
-    memory = psutil.virtual_memory().total / (1024 ** 3)  # Convertir en Go
-    errors = []
-
-    if cores < 4:
-        errors.append(f"[ERROR]: 4 core CPUs required, but found {cores}.")
-    if memory < 16:
-        errors.append(f"[ERROR]: 16 GB of memory required, but found {memory:.2f} GB.")
-
-    return errors
-
+# Appeler la fonction
+if __name__ == "__main__":
+    run_check_requirements()
 
 # Fonction pour afficher le menu principal
 def display_menu():
@@ -272,7 +221,6 @@ if __name__ == "__main__":
         display_menu()
         choice = input("Select an option: ").strip()
         if choice == "1":
-            check_and_install_pip()
             check_and_install_psutil()
             install_tools()
             show_dfir_iris_info
