@@ -7,34 +7,78 @@ from utils.script_folders import SUBFOLDERS
 from utils.script_folders import ORDERED_SCRIPTS
 import sys
 
-import subprocess
-import sys
 
-import subprocess
+def main_menu():
+    while True:
+        display_menu()
+        choice = input("Select an option: ").strip()
+        if choice == "1":
+            errors = run_check_requirements()
+            print("\nSystem requirements not met. Fix the following issues before proceeding:")
+            if errors:
+                for error in errors:
+                    break
+                    #print(f" - {error}")
+                input("\nPress Enter to return to the menu...")
+                continue  # Retourne au menu sans exécuter les étapes suivantes
+            # Si les exigences sont respectées, procéder à l'installation
+            install_tools()
+            show_dfir_iris_info()
+            input("\nPress Enter to return to the menu...")
+        elif choice == "2":
+            print("Exiting...")
+            break
+        else:
+            print("Invalid option. Please try again.")
+
+
+def make_script_executable(script_path):
+    try:
+        # Rendre le script exécutable
+        os.chmod(script_path, 0o755)  # 0o755 donne les permissions d'exécution
+    except Exception as e:
+        print(f"Error while changing permissions: {e}")
+
 
 def run_check_requirements():
     script_path = os.path.join("utils", "check_requirements.sh")
+    make_script_executable(script_path)  # Assurez-vous que le script est exécutable
+
     try:
         # Exécution du script Bash
         result = subprocess.run(
             [script_path],          # Commande à exécuter
-            check=True,                  # Lève une exception si le code de retour n'est pas 0
-            stdout=subprocess.DEVNULL,      # Capture la sortie standard
-            stderr=subprocess.DEVNULL,      # Capture la sortie d'erreur
-            text=True                    # Retourne des chaînes de caractères au lieu de bytes
+            check=False,            # Ne pas lever une exception automatique
+            stdout=subprocess.PIPE, # Capture la sortie standard
+            stderr=subprocess.PIPE, # Capture la sortie d'erreur
+            text=True               # Retourne des chaînes de caractères
         )
-        # Affichage de la sortie standard
-        print("Output:\n", result.stdout)
-    except subprocess.CalledProcessError as e:
-        # En cas d'erreur, afficher les détails
-        print("Error while running the script:")
-        print("Exit Code:", e.returncode)
-        print("Standard Output:\n", e.stdout)
-        print("Standard Error:\n", e.stderr)
 
-# Appeler la fonction
-if __name__ == "__main__":
-    run_check_requirements()
+        # Vérification du code de retour
+        if result.returncode != 0:
+            print("Script exited with a non-zero status.")
+            return ["[ERROR]: Unknown error during system check."]
+
+        # Analyse de la sortie
+        errors = []
+        for line in result.stdout.splitlines():
+            if "[ERROR]" in line:
+                errors.append(line)
+
+        # Affichage des résultats
+        if errors:
+            print("\nSystem requirements check failed:")
+            for error in errors:
+                print(f" - {error}")
+        else:
+            print("\nSystem meets the minimum requirements.")
+
+        return errors
+
+    except Exception as e:
+        print(f"Failed to execute the script: {e}")
+        return ["[ERROR]: Failed to execute system check script."]
+
 
 # Fonction pour afficher le menu principal
 def display_menu():
@@ -197,36 +241,12 @@ def show_dfir_iris_info():
     password = get_dfir_iris_admin_password(iriswebapp_app)
     print(f"IRIS user : administrator et le Mot de passe initial : {password}")
 
-if __name__ == "__main__":
-    show_dfir_iris_info()
-
-
 
 # Fonction pour installer les outils
 def install_tools():
-    print("Checking system requirements...")
-    errors = check_system_requirements()
-
-    if errors:
-        for error in errors:
-            print(error)
-        print("\n[ERROR]: Installation aborted. Please upgrade your system resources.")
-        return
     deploy_scripts()
     deploy_docker_compose_projects()
     display_urls()
 
 if __name__ == "__main__":
-    while True:
-        display_menu()
-        choice = input("Select an option: ").strip()
-        if choice == "1":
-            check_and_install_psutil()
-            install_tools()
-            show_dfir_iris_info
-            input("\nPress Enter to return to the menu...")
-        elif choice == "2":
-            print("Exiting...")
-            break
-        else:
-            print("Invalid option. Please try again.")
+     main_menu()
