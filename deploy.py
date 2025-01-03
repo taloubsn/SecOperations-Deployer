@@ -86,7 +86,7 @@ Requirements:
 Usage:
    $ python3 deploy.py
 
-Maintained by: Abibou DIALLO - https://www.linkedin.com/in/abiboudiallo
+Maintained by: Abibou DIALLO - https://www.linkedin.com/in/abibou-diallo-085869273/
 
 ---
 
