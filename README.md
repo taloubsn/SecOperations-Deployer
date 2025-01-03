@@ -36,9 +36,9 @@ By using this repository, you can deploy these tools quickly and focus on securi
 
 Before starting, ensure you have the following:
 
-- A server or virtual machine with at least 16 GB of RAM and 4 vCPUs.
-- Ubuntu 22 or debain 12.
-- `git` installed.
+- A server or virtual machine with at least 8 GB of RAM and 4 vCPUs.
+- Ubuntu 20.04 or a compatible Linux distribution installed.
+- `git`, `curl`, and `docker` installed.
 - Root or sudo privileges on the server.
 
 ## Features
@@ -66,14 +66,15 @@ cp .env.example .env
 nano .env
 ```
 
-Set values such as admin credentials, network settings.
+Set values such as admin credentials, network settings, and storage paths.
 
 ### Step 3: Run the Installer
 
 Run the installation script to deploy all components:
 
 ```bash
-python3 deploy.py
+chmod +x install.sh
+./install.sh
 ```
 
 The script will:
@@ -91,10 +92,18 @@ Wazuh provides real-time monitoring, log analysis, and threat detection. After i
 Graylog enables centralized log management and analysis. Access Graylog's web interface at `http://<your-server-ip>:9000`.
 
 ### Shuffle
-Shuffle automates workflows and playbooks for security operations. Access Shuffle at `https://<your-server-ip>:3443`.
+Shuffle automates workflows and playbooks for security operations. Access Shuffle at `http://<your-server-ip>:3000`.
 
 ### DFIR-IRs
-DFIR-IRs includes tools for digital forensics and incident response. These tools are available via CLI and integrate with the other components. Access DFIR-IRIS at `https://<your-server-ip>`.
+DFIR-IRs includes tools for digital forensics and incident response. These tools are available via CLI and integrate with the other components.
+
+**Administrator Credentials**:
+- **Username**: `administrator`
+- **Password**: Retrieve the password by running the following command:
+
+  ```bash
+  docker logs iriswebapp_app 2>&1 | grep "WARNING :: post_init :: create_safe_admin"
+  ```
 
 ## Usage
 
