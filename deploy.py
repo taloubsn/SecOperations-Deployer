@@ -19,8 +19,8 @@ def check_and_install_pip():
         print("Downloading and installing pip...")
         try:
             # Silent installation of python3-pip via apt
-            subprocess.run(["sudo", "apt", "update"], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-            subprocess.run(["sudo", "apt", "install", "-y", "python3-pip"], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            subprocess.run(["apt", "update"], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            subprocess.run(["apt", "install", "-y", "python3-pip"], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
             print("pip successfully installed.")
         except subprocess.CalledProcessError as e:
             print(f"Error during pip installation: {e}")
