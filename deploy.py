@@ -2,7 +2,6 @@ import os
 import subprocess
 import locale
 from utils.script_messages import SCRIPT_MESSAGES  # Import des messages
-from utils.display_banner import display_banner  # Import de la bannière
 from utils.display_urls import display_urls  # Import des URLs
 from utils.script_folders import SUBFOLDERS
 from utils.script_folders import ORDERED_SCRIPTS
