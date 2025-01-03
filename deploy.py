@@ -6,37 +6,51 @@ from utils.display_banner import display_banner  # Import de la bannière
 from utils.display_urls import display_urls  # Import des URLs
 from utils.script_folders import SUBFOLDERS
 from utils.script_folders import ORDERED_SCRIPTS
+import sys
 
-import psutil  # Librairie pour vérifier les ressources système
+import subprocess
+import sys
 
 def check_and_install_pip():
-    """Vérifie si 'pip' est installé, et l'installe si nécessaire."""
+    """Checks if 'pip' is installed and installs it if necessary."""
     try:
-        # Vérifier si 'pip' est déjà installé
-        subprocess.check_call([sys.executable, "-m", "pip", "--version"])
-        print("pip est déjà installé.")
+        # Silent check for pip presence
+        subprocess.run([sys.executable, "-m", "pip", "--version"], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     except subprocess.CalledProcessError:
-        print("pip non trouvé. Installation en cours...")
+        print("Downloading and installing pip...")
         try:
-            # Installer pip si nécessaire
-            subprocess.check_call([sys.executable, "-m", "ensurepip", "--upgrade"])
-            print("pip installé avec succès.")
+            # Silent installation of python3-pip via apt
+            subprocess.run(["sudo", "apt", "update"], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            subprocess.run(["sudo", "apt", "install", "-y", "python3-pip"], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            print("pip successfully installed.")
         except subprocess.CalledProcessError as e:
-            print(f"Erreur lors de l'installation de pip: {e}")
+            print(f"Error during pip installation: {e}")
             sys.exit(1)
+    try:
+        # Silent pip upgrade
+        subprocess.run([sys.executable, "-m", "pip", "install", "--upgrade", "pip"], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    except subprocess.CalledProcessError as e:
+        print(f"Error during pip upgrade: {e}")
+        sys.exit(1)
 
 def check_and_install_psutil():
-    """Vérifie si 'psutil' est installé, et l'installe si nécessaire."""
+    """Checks if 'psutil' is installed and installs it if necessary."""
     try:
-        import psutil  # Vérifie si psutil est installé
+        import psutil  # Check if psutil is installed
     except ImportError:
-        print("Module 'psutil' non trouvé. Installation en cours...")
+        print("Downloading and installing psutil...")
         try:
-            subprocess.check_call([sys.executable, "-m", "pip", "install", "psutil"])  # Installe psutil
-            print("Module 'psutil' installé avec succès.")
+            # Silent installation of psutil via pip
+            subprocess.run([sys.executable, "-m", "pip", "install", "psutil"], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            print("psutil successfully installed.")
         except subprocess.CalledProcessError as e:
-            print(f"Erreur lors de l'installation de 'psutil': {e}")
+            print(f"Error during psutil installation: {e}")
             sys.exit(1)
+    finally:
+        # Import psutil after installation
+        global psutil
+        import psutil
+
 
 # Fonction pour vérifier les ressources système
 def check_system_requirements():
@@ -201,8 +215,8 @@ if __name__ == "__main__":
         display_menu()
         choice = input("Select an option: ").strip()
         if choice == "1":
-            check_and_install_pip
-            check_and_install_psutil
+            check_and_install_pip()
+            check_and_install_psutil()
             install_tools()
             input("\nPress Enter to return to the menu...")
         elif choice == "2":
