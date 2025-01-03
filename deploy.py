@@ -6,6 +6,52 @@ from utils.display_urls import display_urls  # Import des URLs
 from utils.script_folders import SUBFOLDERS
 from utils.script_folders import ORDERED_SCRIPTS
 import sys
+import json
+import time
+
+STATUS_FILE = "status.json"
+MAX_RETRIES = 3  # Maximum number of retries
+RETRY_DELAY = 2  # Delay between retries, in seconds
+
+def load_status():
+    """Load the status file or initialize a new empty state."""
+    if os.path.exists(STATUS_FILE):
+        with open(STATUS_FILE, "r") as file:
+            return json.load(file)
+    return {}
+
+def save_status(status):
+    """Save the current status to the status file."""
+    with open(STATUS_FILE, "w") as file:
+        json.dump(status, file, indent=4)
+
+def mark_as_completed(status, task):
+    """Mark a task as completed in the status."""
+    status[task] = "completed"
+    save_status(status)
+
+def mark_as_failed(status, task):
+    """Mark a task as failed in the status."""
+    status[task] = "failed"
+    save_status(status)
+
+def retry_operation(operation, max_retries, delay, *args, **kwargs):
+    """
+    Attempt to execute an operation with a maximum number of retries.
+    """
+    for attempt in range(1, max_retries + 1):
+        try:
+            operation(*args, **kwargs)
+            return True  # Success
+        except Exception as e:
+            print(f"❌ Attempt {attempt}/{max_retries} failed: {e}")
+            if attempt < max_retries:
+                print(f"⏳ Retrying in {delay} seconds...")
+                time.sleep(delay)
+            else:
+                print("🚫 All attempts failed.")
+                return False
+    return False
 
 
 def main_menu():
@@ -163,50 +209,73 @@ def execute_docker_compose_command(folder_path, command, messages):
         print(messages["failure"])
         print(f"� Détails de l'erreur : {e.stderr.strip()}")
 
+
 def deploy_scripts():
-    """
-    Exécute les scripts Bash dans l'ordre défini par ORDERED_SCRIPTS,
-    en utilisant uniquement les messages définis dans SCRIPT_MESSAGES.
-    """
+    """Execute Bash scripts while tracking state and handling retries."""
     current_dir = os.getcwd()
+    status = load_status()
 
     for script in ORDERED_SCRIPTS:
         script_path = os.path.join(current_dir, script)
+        if status.get(script) == "completed":
+            print(f"✅ {script} already executed, skipping.")
+            continue
+
         if script in SCRIPT_MESSAGES:
             if os.path.exists(script_path):
-                execute_script(script_path, SCRIPT_MESSAGES[script])
+                success = retry_operation(
+                    execute_script,
+                    MAX_RETRIES,
+                    RETRY_DELAY,
+                    script_path,
+                    SCRIPT_MESSAGES[script]
+                )
+                if success:
+                    mark_as_completed(status, script)
+                else:
+                    mark_as_failed(status, script)
+                    break  # Stop if all retries fail
             else:
-                print(f"⚠️ Script introuvable : {script_path}")
+                print(f"⚠️ Script not found: {script_path}")
+                mark_as_failed(status, script)
         else:
-            print(f"⚠️ Aucun message défini pour {script}. Script ignoré.")
+            print(f"⚠️ No message defined for {script}. Script skipped.")
+
 
 def deploy_docker_compose_projects():
-    """
-    Déploie les projets Docker Compose dans chaque sous-dossier défini dans SUBFOLDERS.
-    """
+    """Deploy Docker Compose projects while tracking state and handling retries."""
     current_dir = os.getcwd()
+    status = load_status()
 
     for folder in SUBFOLDERS:
         folder_path = os.path.join(current_dir, folder)
+        task_name = f"docker_{folder}"
+
+        if status.get(task_name) == "completed":
+            print(f"✅ Project {folder} already deployed, skipping.")
+            continue
+
         docker_compose_file = os.path.join(folder_path, "docker-compose.yml")
-
         if os.path.exists(docker_compose_file):
-            #print(f"� Traitement du dossier : {folder}")
+            def deploy_folder():
+                if folder == "misp-docker":
+                    execute_docker_compose_command(folder_path, "build", SCRIPT_MESSAGES["misp build"])
+                    execute_docker_compose_command(folder_path, "up -d", SCRIPT_MESSAGES["misp up"])
+                elif folder == "Shuffle":
+                    execute_docker_compose_command(folder_path, "up -d", SCRIPT_MESSAGES["shuffle up"])
+                elif folder == "iris-web":
+                    execute_docker_compose_command(folder_path, "pull", SCRIPT_MESSAGES["dfir-iris pull"])
+                    execute_docker_compose_command(folder_path, "up -d", SCRIPT_MESSAGES["dfir-iris up"])
 
-            if folder == "misp-docker":
-                # Étape 1 : Construire les images Docker pour MISP
-                execute_docker_compose_command(folder_path, "build", SCRIPT_MESSAGES["misp build"])
-                # Étape 2 : Lancer les conteneurs Docker pour MISP
-                execute_docker_compose_command(folder_path, "up -d", SCRIPT_MESSAGES["misp up"])
-            elif folder == "Shuffle":
-                # Lancer les conteneurs Docker pour Shuffle
-                execute_docker_compose_command(folder_path, "up -d", SCRIPT_MESSAGES["shuffle up"])
-            elif folder == "iris-web":
-                # Lancer les conteneurs Docker pour DFIR-IRIS
-                execute_docker_compose_command(folder_path, "pull", SCRIPT_MESSAGES["dfir-iris pull"])
-                execute_docker_compose_command(folder_path, "up -d", SCRIPT_MESSAGES["dfir-iris up"])
+            success = retry_operation(deploy_folder, MAX_RETRIES, RETRY_DELAY)
+            if success:
+                mark_as_completed(status, task_name)
+            else:
+                mark_as_failed(status, task_name)
+                break  # Stop if all retries fail
         else:
-            print(f"⚠️ Aucun fichier docker-compose.yml trouvé dans {folder_path}.")
+            print(f"⚠️ No docker-compose.yml file found in {folder_path}.")
+            mark_as_failed(status, task_name)
 
 
 # Définir le nom du conteneur DFIR-IRIS
