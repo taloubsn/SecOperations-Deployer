@@ -307,7 +307,7 @@ def get_dfir_iris_admin_password(container_name):
 
 def show_dfir_iris_info():
     password = get_dfir_iris_admin_password(iriswebapp_app)
-    print(f"IRIS user : administrator et le Mot de passe initial : {password}")
+    print(f"IRIS USER : administrator et le Mot de passe initial : {password}")
 
 
 # Fonction pour installer les outils
