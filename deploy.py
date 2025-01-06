@@ -69,7 +69,7 @@ def main_menu():
                 continue  # Retourne au menu sans exécuter les étapes suivantes
             # Si les exigences sont respectées, procéder à l'installation
             install_tools()
-            show_dfir_iris_info()
+            #show_dfir_iris_info()
             input("\nPress Enter to return to the menu...")
         elif choice == "2":
             print("Exiting...")
@@ -315,7 +315,7 @@ def install_tools():
     deploy_scripts()
     deploy_docker_compose_projects()
     display_urls()
-    show_dfir_iris_info
+    #show_dfir_iris_info
 
 if __name__ == "__main__":
      main_menu()
