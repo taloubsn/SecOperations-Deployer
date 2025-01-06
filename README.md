@@ -86,10 +86,16 @@ The script will:
 ## Components Overview
 
 ### Wazuh
-Wazuh provides real-time monitoring, log analysis, and threat detection. After installation, access the Wazuh web interface at `http://<your-server-ip>:5601`.
+Wazuh provides real-time monitoring, log analysis, and threat detection. After installation, access the Wazuh web interface at `http://<your-server-ip>:5601`. 
+To display the Wazuh admin password, use the following command:
+
+ ```bash
+  grep "admin" /var/ossec/etc/wazuh_passwords.log
+  ```
 
 ### Graylog
 Graylog enables centralized log management and analysis. Access Graylog's web interface at `http://<your-server-ip>:9000`.
+Default user: Admin and the password is define in the .env file
 
 ### Shuffle
 Shuffle automates workflows and playbooks for security operations. Access Shuffle at `http://<your-server-ip>:3000`.
