@@ -10,7 +10,7 @@ import json
 import time
 
 STATUS_FILE = "status.json"
-MAX_RETRIES = 3  # Maximum number of retries
+MAX_RETRIES = 4  # Maximum number of retries
 RETRY_DELAY = 2  # Delay between retries, in seconds
 
 def load_status():
