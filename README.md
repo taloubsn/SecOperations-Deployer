@@ -28,7 +28,7 @@ This project is designed to automate the deployment of:
 1. **Wazuh**: A powerful open-source security platform for threat detection and response.
 2. **Graylog**: A centralized log management tool for log collection, analysis, and monitoring.
 3. **Shuffle**: An automation platform for security workflows and playbooks.
-4. **DFIR-IRs**: A set of tools for digital forensics and incident response.
+4. **DFIR-IRIS**: A set of tools for digital forensics and incident response.
 
 By using this repository, you can deploy these tools quickly and focus on securing your infrastructure rather than spending time on manual setup.
 
@@ -94,7 +94,7 @@ Graylog enables centralized log management and analysis. Access Graylog's web in
 ### Shuffle
 Shuffle automates workflows and playbooks for security operations. Access Shuffle at `http://<your-server-ip>:3000`.
 
-### DFIR-IRs
+### DFIR-IRIS
 DFIR-IRs includes tools for digital forensics and incident response. These tools are available via CLI and integrate with the other components.
 
 **Administrator Credentials**:
