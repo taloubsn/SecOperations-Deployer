@@ -315,6 +315,7 @@ def install_tools():
     deploy_scripts()
     deploy_docker_compose_projects()
     display_urls()
+    show_dfir_iris_info
 
 if __name__ == "__main__":
      main_menu()
