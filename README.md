@@ -73,8 +73,7 @@ Set values such as admin credentials, network settings, and storage paths.
 Run the installation script to deploy all components:
 
 ```bash
-chmod +x install.sh
-./install.sh
+python3 deploy.py
 ```
 
 The script will:
