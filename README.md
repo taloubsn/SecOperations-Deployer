@@ -37,7 +37,7 @@ By using this repository, you can deploy these tools quickly and focus on securi
 Before starting, ensure you have the following:
 
 - A server or virtual machine with at least 8 GB of RAM and 4 vCPUs.
-- Ubuntu 20.04 or a compatible Linux distribution installed.
+- Ubuntu 22.04 or a compatible Linux distribution installed.
 - `git`, `curl`, and `docker` installed.
 - Root or sudo privileges on the server.
 
