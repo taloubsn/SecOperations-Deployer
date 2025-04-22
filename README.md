@@ -53,7 +53,7 @@ Before starting, ensure you have the following:
 ### Step 1: Clone the Repository
 
 ```bash
-git clone https://github.com/yourusername/automated-wazuh-setup.git
+git clone https://github.com/taloubsn/SecOperations-Deployer.git
 cd SecOperations-Deployer 
 ```
 
