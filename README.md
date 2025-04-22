@@ -54,7 +54,7 @@ Before starting, ensure you have the following:
 
 ```bash
 git clone https://github.com/yourusername/automated-wazuh-setup.git
-cd automated-wazuh-setup
+cd SecOperations-Deployer 
 ```
 
 ### Step 2: Configure Environment Variables
